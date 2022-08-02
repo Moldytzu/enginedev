@@ -7,18 +7,22 @@ GLFWwindow *window;
 
 std::string vertex =
     "#version 330 core\n"
-    "layout (location = 0) in vec3 vertexPosition;\n"
+    "layout (location = 0) in vec3 inVertexPosition;\n"
+    "layout (location = 1) in vec3 inVertexColour;\n"
+    "out vec3 vertexColour;\n"
     "void main()\n"
     "{\n"
-    "   gl_Position = vec4(vertexPosition.x, vertexPosition.y, vertexPosition.z, 1.0);\n"
+    "   gl_Position = vec4(inVertexPosition, 1.0);\n"
+    "   vertexColour = inVertexColour;\n"
     "}\0";
 
 std::string fragment =
     "#version 330 core\n"
     "out vec4 FragColor;\n"
+    "in vec3 vertexColour;\n"
     "void main()\n"
     "{\n"
-    "   FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
+    "   FragColor = vec4(vertexColour, 1.0f);\n"
     "}\n\0";
 
 void resize(GLFWwindow *window, int width, int height)
@@ -130,8 +134,10 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(float *v
     glBindBuffer(GL_ARRAY_BUFFER, buffers.VBO);
     glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     buffers.shader = shader;
     buffers.vertices = size;
