@@ -6,6 +6,8 @@ int main(int argc, char *argv[])
     Engine::Core::Application application; // this class is implemented by the application that uses this engine
     Engine::Render::Renderer renderer;
 
+    Engine::Render::GlobalRenderer = &renderer;
+
     renderer.Init();     // initialise th renderer
     application.Start(); // start the application
 

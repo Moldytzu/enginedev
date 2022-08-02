@@ -10,7 +10,7 @@ AR = ar
 LIB = ../engine/bin/libengine.a
 EXE = $(BINDIR)/game
 
-CPPFLAGS = -Iinc -I../engine/inc -O2
+CPPFLAGS = -Iinc -I../engine/inc -g -std=c++17
 
 SRC = $(call rwildcard,$(SRCDIR),*.cpp)  
 OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRC))

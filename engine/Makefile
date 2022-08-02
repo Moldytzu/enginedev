@@ -9,7 +9,7 @@ CPP = g++
 AR = ar
 LIB = $(BINDIR)/libengine.a
 
-CPPFLAGS = -Iinc -O2
+CPPFLAGS = -Iinc -O2 -std=c++17
 
 SRC = $(call rwildcard,$(SRCDIR),*.cpp)  
 OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRC))
