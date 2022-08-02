@@ -6,13 +6,14 @@ int main(int argc, char *argv[])
     Engine::Core::Application application; // this class is implemented by the application that uses this engine
     Engine::Render::Renderer renderer;
 
+    renderer.Init();     // initialise th renderer
     application.Start(); // start the application
-    renderer.Init();
 
     while (renderer.Open())
     {
-        renderer.Update();
+        renderer.StartFrame();
         application.Update(); // update it on every tick
+        renderer.EndFrame();
     }
 
     return 0;

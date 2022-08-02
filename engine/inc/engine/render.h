@@ -6,7 +6,8 @@ namespace Engine::Render
     {
     public:
         void Init();
-        void Update();
+        void StartFrame();
+        void EndFrame();
 
         bool Open();
 
