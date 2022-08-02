@@ -5,6 +5,22 @@
 
 GLFWwindow *window;
 
+std::string vertex =
+    "#version 330 core\n"
+    "layout (location = 0) in vec3 vertexPosition;\n"
+    "void main()\n"
+    "{\n"
+    "   gl_Position = vec4(vertexPosition.x, vertexPosition.y, vertexPosition.z, 1.0);\n"
+    "}\0";
+
+std::string fragment =
+    "#version 330 core\n"
+    "out vec4 FragColor;\n"
+    "void main()\n"
+    "{\n"
+    "   FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
+    "}\n\0";
+
 void resize(GLFWwindow *window, int width, int height)
 {
     glViewport(0, 0, width, height); // reset the viewport
@@ -37,6 +53,10 @@ void Engine::Render::Renderer::Init()
 
     glEnable(GL_DEPTH);         // depth checking
     glViewport(0, 0, 640, 480); // set the viewport
+
+    DefaultFragmentShader = fragment;
+    DefaultVertexShader = vertex;
+    DefaultShader = CompileShader(DefaultVertexShader, DefaultFragmentShader);
 }
 
 void Engine::Render::Renderer::StartFrame()

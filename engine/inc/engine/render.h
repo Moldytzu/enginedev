@@ -3,7 +3,6 @@
 #include <vector>
 #include <engine/vendor/glad/glad.h>
 
-
 namespace Engine::Render
 {
     struct VertexBuffers
@@ -35,6 +34,9 @@ namespace Engine::Render
         void Draw(VertexBuffers buffer);
 
         ~Renderer();
+
+        std::string DefaultVertexShader, DefaultFragmentShader;
+        unsigned int DefaultShader;
 
     private:
         std::vector<int> shaders;
