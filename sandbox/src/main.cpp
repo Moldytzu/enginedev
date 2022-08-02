@@ -1,5 +1,7 @@
 #include <engine/core.h>
 #include <engine/render.h>
+#include <engine/ecs.h>
+#include <iostream>
 
 Engine::Render::VertexBuffers buffers;
 
@@ -9,9 +11,42 @@ float vertices[] = {
     0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f    // top
 };
 
+class SampleComponent : public Engine::ECS::Component
+{
+public:
+    void Start()
+    {
+        std::cout << "Start\n";
+    }
+
+    void Update()
+    {
+        std::cout << "SampleComponent\n";
+    }
+};
+
+class SampleObject : public Engine::ECS::GameObject
+{
+public:
+    void Start()
+    {
+        std::cout << "Start\n";
+        AddComponent(new SampleComponent);
+    }
+
+    void Update()
+    {
+        Engine::ECS::GameObject::Update(); // update components
+
+        std::cout << "SampleObject\n";
+    }
+};
+
 void Engine::Core::Application::Start()
 {
     buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices, sizeof(vertices), Engine::Render::GlobalRenderer->DefaultShader); // generate buffers
+
+    Engine::ECS::GlobalGameObjectManager->Add(new SampleObject);
 }
 
 void Engine::Core::Application::Update()

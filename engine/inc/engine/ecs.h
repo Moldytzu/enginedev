@@ -1,6 +1,6 @@
 #pragma once
-#include <vendor/glm/common.hpp>
-#include <vendor/glm/fwd.hpp>
+#include <engine/vendor/glm/common.hpp>
+#include <engine/vendor/glm/fwd.hpp>
 #include <vector>
 #include <string>
 
@@ -11,7 +11,6 @@ namespace Engine::ECS
     public:
         virtual void Start();
         virtual void Update();
-        virtual void Draw();
 
         virtual std::string FriendlyName();
     };
@@ -39,7 +38,10 @@ namespace Engine::ECS
         void Update();
 
         GameObject *Get(std::string name);
+
     private:
         std::vector<GameObject *> gameobjects;
     };
+
+    inline GameObjectManager *GlobalGameObjectManager;
 };
