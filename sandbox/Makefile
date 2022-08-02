@@ -16,7 +16,7 @@ SRC = $(call rwildcard,$(SRCDIR),*.cpp)
 OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRC))
 
 game: $(OBJS)
-	$(CPP) $(OBJS) $(LIB) -lglfw -ldl -o $(EXE)
+	$(CPP) $(OBJS) $(LIB) -lglfw -lGL -ldl -lpthread -o $(EXE)
 
 clean:
 	rm -f $(OBJS) $(EXE)
