@@ -8,10 +8,12 @@ namespace Engine::Render
 {
     struct VertexBuffers
     {
-        unsigned int VAO, VBO;
+        unsigned int VAO, VBO, shader;
+        size_t vertices;
 
         void Bind()
         {
+            glUseProgram(shader);
             glBindBuffer(GL_ARRAY_BUFFER, VBO);
             glBindVertexArray(VAO);
         }
@@ -28,9 +30,9 @@ namespace Engine::Render
 
         unsigned int CompileShader(std::string vertex, std::string fragment);
 
-        VertexBuffers GenerateBuffers(float *vertices, size_t size);
+        VertexBuffers GenerateBuffers(float *vertices, size_t size, unsigned int shader);
 
-        void Draw(VertexBuffers buffer, size_t vertices);
+        void Draw(VertexBuffers buffer);
 
         ~Renderer();
 

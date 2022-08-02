@@ -100,7 +100,7 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
     return shaderProgram;
 }
 
-Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(float *vertices, size_t size)
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(float *vertices, size_t size, unsigned int shader)
 {
     Engine::Render::VertexBuffers buffers;
     glGenVertexArrays(1, &buffers.VAO);
@@ -113,13 +113,16 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(float *v
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
+    buffers.shader = shader;
+    buffers.vertices = size;
+
     return buffers;
 }
 
-void Engine::Render::Renderer::Draw(Engine::Render::VertexBuffers buffer, size_t vertices)
+void Engine::Render::Renderer::Draw(Engine::Render::VertexBuffers buffer)
 {
     buffer.Bind();
-    glDrawArrays(GL_TRIANGLES, 0, vertices);
+    glDrawArrays(GL_TRIANGLES, 0, buffer.vertices);
 }
 
 bool Engine::Render::Renderer::Open()

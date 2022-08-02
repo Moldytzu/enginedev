@@ -1,14 +1,13 @@
 #include <engine/core.h>
 #include <engine/render.h>
 
+Engine::Render::VertexBuffers buffers;
+
 float vertices[] = {
     -0.5f, -0.5f, 0.0f, // left
     0.5f, -0.5f, 0.0f,  // right
     0.0f, 0.5f, 0.0f    // top
 };
-
-unsigned int shader;
-Engine::Render::VertexBuffers buffers;
 
 std::string vertex =
     "#version 330 core\n"
@@ -28,13 +27,11 @@ std::string fragment =
 
 void Engine::Core::Application::Start()
 {
-    shader = Engine::Render::GlobalRenderer->CompileShader(vertex, fragment);              // compile a shader program using the sources
+    unsigned int shader = Engine::Render::GlobalRenderer->CompileShader(vertex, fragment);              // compile a shader program using the sources
     buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices, sizeof(vertices)); // generate buffers
 }
 
 void Engine::Core::Application::Update()
 {
-    glUseProgram(shader); // use the shader
-
-    Engine::Render::GlobalRenderer->Draw(buffers, 3); // draw 3 vertices
+    Engine::Render::GlobalRenderer->Draw(buffers); // draw the vertices
 }
