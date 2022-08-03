@@ -7,12 +7,12 @@ Engine::Render::VertexBuffers buffers;
 
 std::vector<Engine::Render::Vertex> vertices =
     {
-        Engine::Render::Vertex(-0.5f, -0.5f, 0.0f, 1, 0, 0),
-        Engine::Render::Vertex(-0.5f, 0.5f, 0.0f, 0, 1, 0),
-        Engine::Render::Vertex(0.5f, 0.5f, 0.0f, 0, 0, 1),
-        Engine::Render::Vertex(-0.5f, -0.5f, 0.0f, 0, 1, 0),
-        Engine::Render::Vertex(0.5f, -0.5f, 0.0f, 1, 0, 0),
-        Engine::Render::Vertex(0.5f, 0.5f, 0.0f, 0, 1, 0),
+        Engine::Render::Vertex(-0.5f, -0.5f),
+        Engine::Render::Vertex(-0.5f, 0.5f),
+        Engine::Render::Vertex(0.5f, 0.5f),
+        Engine::Render::Vertex(-0.5f, -0.5f),
+        Engine::Render::Vertex(0.5f, -0.5f),
+        Engine::Render::Vertex(0.5f, 0.5f),
 };
 
 class SampleComponent : public Engine::ECS::Component

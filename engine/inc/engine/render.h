@@ -26,6 +26,7 @@ namespace Engine::Render
         Vertex(float x, float y, float z, float r, float g, float b) : x{x}, y{y}, z{z}, r{r}, g{g}, b{b} {}
         Vertex(float x, float y, float z) : x{x}, y{y}, z{z}, r{1}, g{1}, b{1} {}
         Vertex(float x, float y, float r, float g, float b) : x{x}, y{y}, z{0}, r{r}, g{g}, b{b} {}
+        Vertex(float x, float y) : x{x}, y{y}, z{0}, r{1}, g{1}, b{1} {}
     };
 
     class Renderer
