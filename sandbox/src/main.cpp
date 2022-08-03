@@ -7,12 +7,12 @@ Engine::Render::VertexBuffers buffers;
 
 std::vector<Engine::Render::Vertex> vertices =
     {
-        Engine::Render::Vertex(-0.5f, -0.5f),
-        Engine::Render::Vertex(-0.5f, 0.5f),
-        Engine::Render::Vertex(0.5f, 0.5f),
-        Engine::Render::Vertex(-0.5f, -0.5f),
-        Engine::Render::Vertex(0.5f, -0.5f),
-        Engine::Render::Vertex(0.5f, 0.5f),
+        Engine::Render::Vertex(0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f),
+        Engine::Render::Vertex(0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f),
+        Engine::Render::Vertex(-0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f),
+        Engine::Render::Vertex(0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f),
+        Engine::Render::Vertex(-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f),
+        Engine::Render::Vertex(-0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f),
 };
 
 class SampleComponent : public Engine::ECS::Component
@@ -48,13 +48,7 @@ public:
 
 void Engine::Core::Application::Start()
 {
-    Engine::Core::Any any;
-    any.SetString("abc", "abc");
-    std::cout << any.GetFloat("abc") << " ";
-    any.SetFloat("abc", 2.0f);
-    std::cout << any.GetFloat("abc") << " ";
-
-    buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices); // generate buffers
+    buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices, Engine::Render::GlobalRenderer->DefaultShader, Engine::Render::GlobalRenderer->LoadTexture("./bricks.jpg")); // generate buffers
 
     Engine::ECS::GlobalGameObjectManager->Add(new SampleObject);
 }

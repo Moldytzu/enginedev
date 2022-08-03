@@ -1,7 +1,11 @@
+#define STB_IMAGE_IMPLEMENTATION
+
+#include <engine/vendor/stb_image.h>
 #include <engine/render.h>
 #include <engine/vendor/glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <filesystem>
 
 GLFWwindow *window;
 
@@ -9,20 +13,25 @@ std::string vertex =
     "#version 330 core\n"
     "layout (location = 0) in vec3 inVertexPosition;\n"
     "layout (location = 1) in vec3 inVertexColour;\n"
+    "layout (location = 2) in vec2 inTexturePosition;\n"
     "out vec3 vertexColour;\n"
+    "out vec2 texturePosition;\n"
     "void main()\n"
     "{\n"
     "   gl_Position = vec4(inVertexPosition, 1.0);\n"
     "   vertexColour = inVertexColour;\n"
+    "   texturePosition = inTexturePosition;\n"
     "}\0";
 
 std::string fragment =
     "#version 330 core\n"
     "out vec4 FragColor;\n"
     "in vec3 vertexColour;\n"
+    "in vec2 texturePosition;\n"
+    "uniform sampler2D texture1;\n"
     "void main()\n"
     "{\n"
-    "   FragColor = vec4(vertexColour, 1.0f);\n"
+    "   FragColor = texture(texture1, texturePosition) * vec4(vertexColour, 1.0);\n"
     "}\n\0";
 
 void resize(GLFWwindow *window, int width, int height)
@@ -57,6 +66,10 @@ void Engine::Render::Renderer::Init()
 
     glEnable(GL_DEPTH);         // depth checking
     glViewport(0, 0, 640, 480); // set the viewport
+
+    // create first empty texture
+    unsigned int texture;
+    glGenTextures(1, &texture);
 
     DefaultFragmentShader = fragment;
     DefaultVertexShader = vertex;
@@ -124,19 +137,49 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
     return shaderProgram;
 }
 
-Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> vertices, unsigned int shader)
+unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
 {
-    size_t size = vertices.size() * 6 * sizeof(float);
+    unsigned int texture;
+    glGenTextures(1, &texture);                                   // generate texture
+    glBindTexture(GL_TEXTURE_2D, texture);                        // bind texture
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping mode
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    float *verts = new float[vertices.size() * 6];
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // linear (more blurry and slower) mipmapping
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    int width, height, nrChannels;
+
+    unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0); // load image
+    if (!data)
+    {
+        std::cout << "Failed to load texture" << std::endl;
+        stbi_image_free(data);
+        return 0;
+    }
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data); // send data
+    glGenerateMipmap(GL_TEXTURE_2D);                                                          // generate mipmap
+
+    stbi_image_free(data); // free image data
+    return texture;        // return the texture
+}
+
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> vertices, unsigned int shader, unsigned int texture)
+{
+    size_t size = vertices.size() * 8 * sizeof(float);
+
+    float *verts = new float[vertices.size() * 8];
     for (size_t s = 0; s < vertices.size(); s++)
     {
-        verts[s * 6 + 0] = vertices[s].x;
-        verts[s * 6 + 1] = vertices[s].y;
-        verts[s * 6 + 2] = vertices[s].z;
-        verts[s * 6 + 3] = vertices[s].r;
-        verts[s * 6 + 4] = vertices[s].g;
-        verts[s * 6 + 5] = vertices[s].b;
+        verts[s * 8 + 0] = vertices[s].x;
+        verts[s * 8 + 1] = vertices[s].y;
+        verts[s * 8 + 2] = vertices[s].z;
+        verts[s * 8 + 3] = vertices[s].r;
+        verts[s * 8 + 4] = vertices[s].g;
+        verts[s * 8 + 5] = vertices[s].b;
+        verts[s * 8 + 6] = vertices[s].tx;
+        verts[s * 8 + 7] = vertices[s].ty;
     }
 
     Engine::Render::VertexBuffers buffers;
@@ -147,15 +190,23 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vec
     glBindBuffer(GL_ARRAY_BUFFER, buffers.VBO);
     glBufferData(GL_ARRAY_BUFFER, size, verts, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
+
+    for (int i = 0; i <= 2; i++)
+        glEnableVertexAttribArray(i);
 
     buffers.shader = shader;
-    buffers.vertices = size / sizeof(float) / 6; // get count of vertices
+    buffers.vertices = size / sizeof(float) / 8; // get count of vertices
+    buffers.texture = texture;
 
     return buffers;
+}
+
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> vertices, unsigned int shader)
+{
+    return GenerateBuffers(vertices, shader, 0);
 }
 
 Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> vertices)

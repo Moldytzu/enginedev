@@ -1,3 +1,5 @@
 # Built/generated files
-bin
+game
 obj
+*.a
+.vscode
