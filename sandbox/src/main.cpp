@@ -7,8 +7,12 @@ Engine::Render::VertexBuffers buffers;
 
 float vertices[] = {
     -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // left
-    0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,  // right
-    0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f    // top
+    -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f,  // right
+    0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f,    // top
+    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // left
+    0.5f, -0.5f, 0.0f, 1.0f,0.0f, 0.0f,  // right
+    0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // top
+    100.0f // end
 };
 
 class SampleComponent : public Engine::ECS::Component
@@ -44,7 +48,7 @@ public:
 
 void Engine::Core::Application::Start()
 {
-    buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices, sizeof(vertices), Engine::Render::GlobalRenderer->DefaultShader); // generate buffers
+    buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices); // generate buffers
 
     Engine::ECS::GlobalGameObjectManager->Add(new SampleObject);
 }

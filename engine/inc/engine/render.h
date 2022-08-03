@@ -29,7 +29,8 @@ namespace Engine::Render
 
         unsigned int CompileShader(std::string vertex, std::string fragment);
 
-        VertexBuffers GenerateBuffers(float *vertices, size_t size, unsigned int shader);
+        VertexBuffers GenerateBuffers(float *vertices, unsigned int shader);
+        VertexBuffers GenerateBuffers(float *vertices);
 
         void Draw(VertexBuffers buffer);
 

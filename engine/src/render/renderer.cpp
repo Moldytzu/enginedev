@@ -124,8 +124,12 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
     return shaderProgram;
 }
 
-Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(float *vertices, size_t size, unsigned int shader)
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(float *vertices, unsigned int shader)
 {
+    size_t size = 0;
+    for(; vertices[size] != 100.0f; size++);
+    size *= sizeof(float); // get size in bytes
+
     Engine::Render::VertexBuffers buffers;
     glGenVertexArrays(1, &buffers.VAO);
     glGenBuffers(1, &buffers.VBO);
@@ -140,9 +144,14 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(float *v
     glEnableVertexAttribArray(1);
 
     buffers.shader = shader;
-    buffers.vertices = size;
+    buffers.vertices = size / sizeof(float) / 6; // get count of vertices
 
     return buffers;
+}
+
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(float *vertices)
+{
+    return GenerateBuffers(vertices, DefaultShader);
 }
 
 void Engine::Render::Renderer::Draw(Engine::Render::VertexBuffers buffer)
