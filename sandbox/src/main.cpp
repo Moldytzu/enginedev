@@ -48,6 +48,12 @@ public:
 
 void Engine::Core::Application::Start()
 {
+    Engine::Core::Any any;
+    any.SetString("abc", "abc");
+    std::cout << any.GetString("abc") << " ";
+    any.SetFloat("abc", 2.0f);
+    std::cout << any.GetFloat("abc") << " ";
+
     buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices); // generate buffers
 
     Engine::ECS::GlobalGameObjectManager->Add(new SampleObject);
