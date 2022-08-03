@@ -124,11 +124,20 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
     return shaderProgram;
 }
 
-Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(float *vertices, unsigned int shader)
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> vertices, unsigned int shader)
 {
-    size_t size = 0;
-    for(; vertices[size] != 100.0f; size++);
-    size *= sizeof(float); // get size in bytes
+    size_t size = vertices.size() * 6 * sizeof(float);
+
+    float *verts = new float[vertices.size() * 6];
+    for (size_t s = 0; s < vertices.size(); s++)
+    {
+        verts[s * 6 + 0] = vertices[s].x;
+        verts[s * 6 + 1] = vertices[s].y;
+        verts[s * 6 + 2] = vertices[s].z;
+        verts[s * 6 + 3] = vertices[s].r;
+        verts[s * 6 + 4] = vertices[s].g;
+        verts[s * 6 + 5] = vertices[s].b;
+    }
 
     Engine::Render::VertexBuffers buffers;
     glGenVertexArrays(1, &buffers.VAO);
@@ -136,7 +145,7 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(float *v
     glBindVertexArray(buffers.VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, buffers.VBO);
-    glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, size, verts, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
@@ -149,7 +158,7 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(float *v
     return buffers;
 }
 
-Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(float *vertices)
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> vertices)
 {
     return GenerateBuffers(vertices, DefaultShader);
 }
