@@ -50,7 +50,7 @@ void Engine::Core::Application::Start()
 {
     Engine::Core::Any any;
     any.SetString("abc", "abc");
-    std::cout << any.GetString("abc") << " ";
+    std::cout << any.GetFloat("abc") << " ";
     any.SetFloat("abc", 2.0f);
     std::cout << any.GetFloat("abc") << " ";
 
