@@ -2,9 +2,22 @@
 #include <string>
 #include <vector>
 #include <engine/vendor/glad/glad.h>
+#include <engine/vendor/glm/glm.hpp>
+#include <engine/vendor/glm/gtc/matrix_transform.hpp>
+#include <engine/vendor/glm/gtc/type_ptr.hpp>
 
 namespace Engine::Render
 {
+    class Transform
+    {
+    public:
+        glm::mat4 Matrix;
+
+        Transform();
+
+        void Translate(glm::vec3 offset);
+    };
+
     struct VertexBuffers
     {
         unsigned int VAO, VBO, shader, texture;
@@ -48,15 +61,19 @@ namespace Engine::Render
         VertexBuffers GenerateBuffers(std::vector<Vertex> vertices, unsigned int shader);
         VertexBuffers GenerateBuffers(std::vector<Vertex> vertices);
 
-        void Draw(VertexBuffers buffer);
+        void Draw(VertexBuffers buffer, Transform transform);
 
         ~Renderer();
 
         std::string DefaultVertexShader, DefaultFragmentShader;
         unsigned int DefaultShader;
 
+        Transform CameraTransform;
+        glm::mat4 CameraProjection;
+
     private:
         std::vector<int> shaders;
+        unsigned int modelLocation, projectionLocation, viewLocation;
     };
 
     inline Renderer *GlobalRenderer;

@@ -16,9 +16,12 @@ std::string vertex =
     "layout (location = 2) in vec2 inTexturePosition;\n"
     "out vec3 vertexColour;\n"
     "out vec2 texturePosition;\n"
+    "uniform mat4 projection;\n"
+    "uniform mat4 view;\n"
+    "uniform mat4 model;\n"
     "void main()\n"
     "{\n"
-    "   gl_Position = vec4(inVertexPosition, 1.0);\n"
+    "   gl_Position = projection * view * model * vec4(inVertexPosition, 1.0);\n"
     "   vertexColour = inVertexColour;\n"
     "   texturePosition = inTexturePosition;\n"
     "}\0";
@@ -74,12 +77,23 @@ void Engine::Render::Renderer::Init()
     DefaultFragmentShader = fragment;
     DefaultVertexShader = vertex;
     DefaultShader = CompileShader(DefaultVertexShader, DefaultFragmentShader);
+
+    glUseProgram(DefaultShader);
+
+    viewLocation = glGetUniformLocation(DefaultShader, "view");
+    modelLocation = glGetUniformLocation(DefaultShader, "model");
+    projectionLocation = glGetUniformLocation(DefaultShader, "projection");
+
+    CameraProjection = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 100.0f); // generate projection
+    glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(CameraProjection));           // set the projection
 }
 
 void Engine::Render::Renderer::StartFrame()
 {
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);               // grayish colour
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the window and the depth buffer
+
+    glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(CameraTransform.Matrix));
 }
 
 void Engine::Render::Renderer::EndFrame()
@@ -214,9 +228,10 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vec
     return GenerateBuffers(vertices, DefaultShader);
 }
 
-void Engine::Render::Renderer::Draw(Engine::Render::VertexBuffers buffer)
+void Engine::Render::Renderer::Draw(Engine::Render::VertexBuffers buffer, Engine::Render::Transform transform)
 {
     buffer.Bind();
+    glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(transform.Matrix)); // pass the matrix of the transform
     glDrawArrays(GL_TRIANGLES, 0, buffer.vertices);
 }
 

@@ -25,7 +25,7 @@ public:
 
     void Update()
     {
-        std::cout << "SampleComponent\n";
+        // std::cout << "SampleComponent\n";
     }
 };
 
@@ -42,7 +42,7 @@ public:
     {
         Engine::ECS::GameObject::Update(); // update components
 
-        std::cout << "SampleObject\n";
+        // std::cout << "SampleObject\n";
     }
 };
 
@@ -51,9 +51,11 @@ void Engine::Core::Application::Start()
     buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices, Engine::Render::GlobalRenderer->DefaultShader, Engine::Render::GlobalRenderer->LoadTexture("./bricks.jpg")); // generate buffers
 
     Engine::ECS::GlobalGameObjectManager->Add(new SampleObject);
+    Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 0, -10)); // translate the camera back
 }
 
 void Engine::Core::Application::Update()
 {
-    Engine::Render::GlobalRenderer->Draw(buffers); // draw the vertices
+    Engine::Render::Transform transform;                      // transform of the vertices
+    Engine::Render::GlobalRenderer->Draw(buffers, transform); // draw the vertices
 }
