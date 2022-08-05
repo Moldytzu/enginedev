@@ -33,4 +33,13 @@ namespace Engine::Core
         void Update();
     };
 
+    class Logger
+    {
+    public:
+        static void LogInfo(std::string msg);
+        static void LogWarn(std::string msg);
+        static void LogError(std::string msg);
+        static void LogDebug(std::string msg);
+    };
+
 };

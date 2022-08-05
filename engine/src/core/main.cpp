@@ -4,10 +4,14 @@
 
 int main(int argc, char *argv[])
 {
+    Engine::Core::Logger::LogInfo("Starting up the engine");
+
+    // instantiate the required classes
     Engine::Core::Application application; // this class is implemented by the application that uses this engine
     Engine::Render::Renderer renderer;
     Engine::ECS::GameObjectManager manager;
 
+    // set their address in the global scope
     Engine::ECS::GlobalGameObjectManager = &manager;
     Engine::Render::GlobalRenderer = &renderer;
 
@@ -16,10 +20,10 @@ int main(int argc, char *argv[])
 
     while (renderer.Open())
     {
-        renderer.StartFrame();
-        application.Update(); // update the application on every tick
-        manager.Update();     // update the objects
-        renderer.EndFrame();
+        renderer.StartFrame(); // create new frame
+        application.Update();  // update the application on every tick
+        manager.Update();      // update the objects
+        renderer.EndFrame();   // terminate the frame
     }
 
     return 0;

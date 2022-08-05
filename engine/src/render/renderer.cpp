@@ -2,6 +2,7 @@
 
 #include <engine/vendor/stb_image.h>
 #include <engine/render.h>
+#include <engine/core.h>
 #include <engine/vendor/glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -44,7 +45,7 @@ void resize(GLFWwindow *window, int width, int height)
 
 void Engine::Render::Renderer::Init()
 {
-    std::cout << "Starting up the renderer\n";
+    Engine::Core::Logger::LogDebug("Initialising the renderer");
 
     glfwInit();                                    // initialise glfw
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // hint that we want an opengl 3.3 core context
@@ -57,13 +58,16 @@ void Engine::Render::Renderer::Init()
     window = glfwCreateWindow(640, 480, "Main Window", NULL, NULL); // create the main window
     if (window == NULL)
     {
-        std::cout << "Failed to create GLFW window" << std::endl;
+        Engine::Core::Logger::LogError("Failed to create window");
         glfwTerminate();
     }
     glfwMakeContextCurrent(window); // select the context
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) // load glad
-        std::cout << "Failed to initialize GLAD" << std::endl;
+    {
+        Engine::Core::Logger::LogError("Failed to load GLAD");
+        glfwTerminate();
+    }
 
     glfwSetFramebufferSizeCallback(window, resize); // resize callback
 
@@ -74,16 +78,19 @@ void Engine::Render::Renderer::Init()
     unsigned int texture;
     glGenTextures(1, &texture);
 
+    // compile the default shader
     DefaultFragmentShader = fragment;
     DefaultVertexShader = vertex;
     DefaultShader = CompileShader(DefaultVertexShader, DefaultFragmentShader);
 
     glUseProgram(DefaultShader);
 
+    // grab the location of the uniforms
     viewLocation = glGetUniformLocation(DefaultShader, "view");
     modelLocation = glGetUniformLocation(DefaultShader, "model");
     projectionLocation = glGetUniformLocation(DefaultShader, "projection");
 
+    // calculate the perspective
     CameraProjection = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 100.0f); // generate projection
     glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(CameraProjection));           // set the projection
 }
@@ -93,7 +100,7 @@ void Engine::Render::Renderer::StartFrame()
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);               // grayish colour
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the window and the depth buffer
 
-    glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(CameraTransform.Matrix));
+    glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(CameraTransform.Matrix)); // set the camera transform matrix
 }
 
 void Engine::Render::Renderer::EndFrame()
@@ -104,15 +111,18 @@ void Engine::Render::Renderer::EndFrame()
 
 unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::string fragment)
 {
+    // create shaders for vertex and fragment
     const char *vertexSrc = vertex.c_str(), *fragmentSrc = fragment.c_str();
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER), fragmentShader = glCreateShader(GL_FRAGMENT_SHADER), shaderProgram = glCreateProgram();
 
+    // pass the source code and compile
     glShaderSource(vertexShader, 1, &vertexSrc, NULL);
     glCompileShader(vertexShader);
 
     glShaderSource(fragmentShader, 1, &fragmentSrc, NULL);
     glCompileShader(fragmentShader);
 
+    // handle errors
     int success;
     char infoLog[512];
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
@@ -120,7 +130,7 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
     if (!success)
     {
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "Failed to compile vertex shader (" << infoLog << ")" << std::endl;
+        Engine::Core::Logger::LogError("Failed to compile vertex shader! (" + std::string(infoLog) + ")");
         return -1;
     }
 
@@ -129,10 +139,11 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
     if (!success)
     {
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "Failed to compile fragment shader (" << infoLog << ")" << std::endl;
+        Engine::Core::Logger::LogError("Failed to compile fragment shader! (" + std::string(infoLog) + ")");
         return -1;
     }
 
+    // link the shaders into a program
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
@@ -140,10 +151,11 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
     if (!success)
     {
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "Failed to link program (" << infoLog << ")" << std::endl;
+        Engine::Core::Logger::LogError("Failed to link shader! (" + std::string(infoLog) + ")");
         return -1;
     }
 
+    // delete unused objects
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
     shaders.push_back(shaderProgram);
@@ -154,7 +166,7 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
 unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
 {
     unsigned int texture;
-    glGenTextures(1, &texture);                                   // generate texture
+    glGenTextures(1, &texture);  // generate a new texture                                 // generate texture
     glBindTexture(GL_TEXTURE_2D, texture);                        // bind texture
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping mode
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -165,9 +177,9 @@ unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
     int width, height, nrChannels;
 
     unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0); // load image
-    if (!data)
+    if (!data) // check for data
     {
-        std::cout << "Failed to load texture" << std::endl;
+        Engine::Core::Logger::LogError("Failed to load texture from " + path);
         stbi_image_free(data);
         return 0;
     }
@@ -181,10 +193,10 @@ unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
 
 Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> vertices, unsigned int shader, unsigned int texture)
 {
-    size_t size = vertices.size() * 8 * sizeof(float);
+    size_t size = vertices.size() * 8 * sizeof(float); //size in bytes of the data stored in the vertices
 
-    float *verts = new float[vertices.size() * 8];
-    for (size_t s = 0; s < vertices.size(); s++)
+    float *verts = new float[vertices.size() * 8]; // raw array that stores the raw data
+    for (size_t s = 0; s < vertices.size(); s++) // fill the array
     {
         verts[s * 8 + 0] = vertices[s].x;
         verts[s * 8 + 1] = vertices[s].y;
@@ -197,20 +209,23 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vec
     }
 
     Engine::Render::VertexBuffers buffers;
-    glGenVertexArrays(1, &buffers.VAO);
+    glGenVertexArrays(1, &buffers.VAO);  // generate vao and vbo
     glGenBuffers(1, &buffers.VBO);
     glBindVertexArray(buffers.VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, buffers.VBO);
-    glBufferData(GL_ARRAY_BUFFER, size, verts, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, size, verts, GL_STATIC_DRAW); // fill vbo with the vertex data
 
+    // tell opengl how to handle the vertex data
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
 
+    // enable the attributes
     for (int i = 0; i <= 2; i++)
         glEnableVertexAttribArray(i);
 
+    // fill the structure
     buffers.shader = shader;
     buffers.vertices = size / sizeof(float) / 8; // get count of vertices
     buffers.texture = texture;
@@ -230,9 +245,9 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vec
 
 void Engine::Render::Renderer::Draw(Engine::Render::VertexBuffers buffer, Engine::Render::Transform transform)
 {
-    buffer.Bind();
+    buffer.Bind(); // bind the buffers
     glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(transform.Matrix)); // pass the matrix of the transform
-    glDrawArrays(GL_TRIANGLES, 0, buffer.vertices);
+    glDrawArrays(GL_TRIANGLES, 0, buffer.vertices); // draw
 }
 
 bool Engine::Render::Renderer::Open()
@@ -242,6 +257,6 @@ bool Engine::Render::Renderer::Open()
 
 Engine::Render::Renderer::~Renderer()
 {
-    std::cout << "Destroying the renderer\n";
+    Engine::Core::Logger::LogDebug("Destroying the renderer");
     glfwTerminate();
 }

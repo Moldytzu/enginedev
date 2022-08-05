@@ -35,7 +35,7 @@ std::string Engine::Core::Any::GetString(std::string key)
     }
     catch (std::bad_any_cast e)
     {
-        std::cout << "An exception happened when casting a key to string (" << e.what() << ")\n";
+        Engine::Core::Logger::LogError("An exception happened when casting a key to string" + std::string(e.what()) + ")");
     }
     return ret;
 }
@@ -49,7 +49,7 @@ int Engine::Core::Any::GetInt(std::string key)
     }
     catch (std::bad_any_cast e)
     {
-        std::cout << "An exception happened when casting a key to int (" << e.what() << ")\n";
+        Engine::Core::Logger::LogError("An exception happened when casting a key to int" + std::string(e.what()) + ")");
     }
     return ret;
 }
@@ -63,7 +63,7 @@ float Engine::Core::Any::GetFloat(std::string key)
     }
     catch (std::bad_any_cast e)
     {
-        std::cout << "An exception happened when casting a key to float (" << e.what() << ")\n";
+        Engine::Core::Logger::LogError("An exception happened when casting a key to float" + std::string(e.what()) + ")");
     }
     return ret;
 }
@@ -77,7 +77,7 @@ bool Engine::Core::Any::GetBool(std::string key)
     }
     catch (std::bad_any_cast e)
     {
-        std::cout << "An exception happened when casting a key to bool (" << e.what() << ")\n";
+        Engine::Core::Logger::LogError("An exception happened when casting a key to bool" + std::string(e.what()) + ")");
     }
     return ret;
 }
@@ -91,7 +91,7 @@ glm::vec3 Engine::Core::Any::GetVec3(std::string key)
     }
     catch (std::bad_any_cast e)
     {
-        std::cout << "An exception happened when casting a key to glm::vec3 (" << e.what() << ")\n";
+        Engine::Core::Logger::LogError("An exception happened when casting a key to vec3" + std::string(e.what()) + ")");
     }
     return ret;
 }
