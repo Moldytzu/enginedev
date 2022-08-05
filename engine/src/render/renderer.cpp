@@ -9,6 +9,7 @@
 #include <filesystem>
 
 GLFWwindow *window;
+double lastTime;
 
 std::string vertex =
     "#version 330 core\n"
@@ -71,8 +72,9 @@ void Engine::Render::Renderer::Init()
 
     glfwSetFramebufferSizeCallback(window, resize); // resize callback
 
-    glEnable(GL_DEPTH);         // depth checking
-    glViewport(0, 0, 640, 480); // set the viewport
+    glEnable(GL_DEPTH);                   // depth checking
+    glViewport(0, 0, 640, 480);           // set the viewport
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f); // grayish colour
 
     // create first empty texture
     unsigned int texture;
@@ -93,11 +95,14 @@ void Engine::Render::Renderer::Init()
     // calculate the perspective
     CameraProjection = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 100.0f); // generate projection
     glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(CameraProjection));           // set the projection
+
+    glfwSwapInterval(0); // disable VSYNC
 }
 
 void Engine::Render::Renderer::StartFrame()
 {
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);               // grayish colour
+    lastTime = glfwGetTime();
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the window and the depth buffer
 
     glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(CameraTransform.Matrix)); // set the camera transform matrix
@@ -105,6 +110,14 @@ void Engine::Render::Renderer::StartFrame()
 
 void Engine::Render::Renderer::EndFrame()
 {
+    DeltaTime = glfwGetTime() - lastTime; // determine time needed to draw a frame
+
+    if (glfwGetTime() - (int)glfwGetTime() <= 0.01f) // update the title roughfly every second
+    {
+        std::string title = std::to_string((int)(1 / DeltaTime)) + " FPS"; // create the title
+        glfwSetWindowTitle(window, title.c_str());                         // set the title
+    }
+
     glfwSwapBuffers(window); // swap the buffers
     glfwPollEvents();        // poll for the events
 }
@@ -166,7 +179,7 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
 unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
 {
     unsigned int texture;
-    glGenTextures(1, &texture);  // generate a new texture                                 // generate texture
+    glGenTextures(1, &texture);                                   // generate a new texture                                 // generate texture
     glBindTexture(GL_TEXTURE_2D, texture);                        // bind texture
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping mode
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -177,7 +190,7 @@ unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
     int width, height, nrChannels;
 
     unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0); // load image
-    if (!data) // check for data
+    if (!data)                                                                      // check for data
     {
         Engine::Core::Logger::LogError("Failed to load texture from " + path);
         stbi_image_free(data);
@@ -193,10 +206,10 @@ unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
 
 Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> vertices, unsigned int shader, unsigned int texture)
 {
-    size_t size = vertices.size() * 8 * sizeof(float); //size in bytes of the data stored in the vertices
+    size_t size = vertices.size() * 8 * sizeof(float); // size in bytes of the data stored in the vertices
 
     float *verts = new float[vertices.size() * 8]; // raw array that stores the raw data
-    for (size_t s = 0; s < vertices.size(); s++) // fill the array
+    for (size_t s = 0; s < vertices.size(); s++)   // fill the array
     {
         verts[s * 8 + 0] = vertices[s].x;
         verts[s * 8 + 1] = vertices[s].y;
@@ -209,7 +222,7 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vec
     }
 
     Engine::Render::VertexBuffers buffers;
-    glGenVertexArrays(1, &buffers.VAO);  // generate vao and vbo
+    glGenVertexArrays(1, &buffers.VAO); // generate vao and vbo
     glGenBuffers(1, &buffers.VBO);
     glBindVertexArray(buffers.VAO);
 
@@ -245,9 +258,9 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vec
 
 void Engine::Render::Renderer::Draw(Engine::Render::VertexBuffers buffer, Engine::Render::Transform transform)
 {
-    buffer.Bind(); // bind the buffers
+    buffer.Bind();                                                                    // bind the buffers
     glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(transform.Matrix)); // pass the matrix of the transform
-    glDrawArrays(GL_TRIANGLES, 0, buffer.vertices); // draw
+    glDrawArrays(GL_TRIANGLES, 0, buffer.vertices);                                   // draw
 }
 
 bool Engine::Render::Renderer::Open()
