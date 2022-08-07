@@ -1,0 +1,22 @@
+{
+    "tasks": [
+        {
+            "type": "process",
+            "label": "make",
+            "command": "make",
+            "args": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Builds project using make"
+        }
+    ],
+    "version": "2.0.0"
+}
