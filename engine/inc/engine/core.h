@@ -5,6 +5,8 @@
 #include <engine/vendor/glm/common.hpp>
 #include <engine/vendor/glm/fwd.hpp>
 
+#define CHECK_CLASS { if (this == nullptr) { Engine::Core::Logger::LogError(std::string("Null class accessed! (") + __FILE__ + ":" + std::to_string(__LINE__) + ")"); exit(-1); } }
+
 namespace Engine::Core
 {
     class Any

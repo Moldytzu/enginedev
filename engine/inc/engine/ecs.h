@@ -37,10 +37,13 @@ namespace Engine::ECS
     {
     public:
         void Add(GameObject *obj);
+        void Add(GameObject *obj, std::string name);
+
         void Delete(GameObject *obj);
         void Update();
 
         GameObject *Get(std::string name);
+        bool Exists(std::string name);
 
     private:
         std::vector<GameObject *> gameobjects;

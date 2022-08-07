@@ -25,7 +25,7 @@ public:
 
     void Update()
     {
-        std::cout << "SampleComponent\n";
+        //std::cout << "SampleComponent\n";
     }
 
     std::string FriendlyName()
@@ -61,9 +61,12 @@ void Engine::Core::Application::Start()
     buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices, Engine::Render::GlobalRenderer->DefaultShader, Engine::Render::GlobalRenderer->LoadTexture("bricks.jpg")); // generate buffers
 
     Engine::ECS::GlobalGameObjectManager->Add(new SampleObject);
-    Engine::ECS::Component *c = Engine::ECS::GlobalGameObjectManager->Get("SampleObject")->GetComponent("SampleComponent"); // get the component
-    Engine::ECS::GlobalGameObjectManager->Get("SampleObject")->DeleteComponent(c);                                          // delete the component
-
+    Engine::ECS::GlobalGameObjectManager->Add(new SampleObject);
+    Engine::ECS::GlobalGameObjectManager->Add(new SampleObject);
+    Engine::ECS::GlobalGameObjectManager->Add(new SampleObject, "Abc");
+    Engine::ECS::GlobalGameObjectManager->Add(new SampleObject, "Abc");
+    Engine::ECS::GlobalGameObjectManager->Add(new SampleObject, "Abc");
+ 
     Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 0, -10)); // translate the camera back
 }
 
