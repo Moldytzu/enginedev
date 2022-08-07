@@ -48,7 +48,7 @@ public:
 
 void Engine::Core::Application::Start()
 {
-    buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices, Engine::Render::GlobalRenderer->DefaultShader, Engine::Render::GlobalRenderer->LoadTexture("./bricks.jpg")); // generate buffers
+    buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices, Engine::Render::GlobalRenderer->DefaultShader, Engine::Render::GlobalRenderer->LoadTexture("bricks.jpg")); // generate buffers
 
     Engine::ECS::GlobalGameObjectManager->Add(new SampleObject);
     Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 0, -10)); // translate the camera back

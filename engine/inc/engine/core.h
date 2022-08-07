@@ -42,4 +42,10 @@ namespace Engine::Core
         static void LogDebug(std::string msg);
     };
 
+    class Filesystem
+    {
+    public:
+        static std::string ParseRelativePath(std::string relative);
+    };
+
 };

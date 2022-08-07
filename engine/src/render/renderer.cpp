@@ -189,7 +189,9 @@ unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
 
     int width, height, nrChannels;
 
-    unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0); // load image
+    std::string parsedPath = Engine::Core::Filesystem::ParseRelativePath(path); // parse relative path
+
+    unsigned char *data = stbi_load(parsedPath.c_str(), &width, &height, &nrChannels, 0); // load image
     if (!data)                                                                      // check for data
     {
         Engine::Core::Logger::LogError("Failed to load texture from " + path);
