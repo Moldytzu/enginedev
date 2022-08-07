@@ -14,10 +14,10 @@ std::string getProgramDirectory()
 
     while (str.back() != '/') // remove each character until we are left with the directory path
         str.pop_back();
-    
+
     return str; // return the processed string
 #else
-    #error Unsupported platform. Please implement this function first.
+#error Unsupported platform. Please implement this function first.
 #endif
 }
 
@@ -28,7 +28,7 @@ std::string Engine::Core::Filesystem::ParseRelativePath(std::string relative)
     if (!s.fail()) // check if the file exists
     {
         s.close(); // close the stream
-        return relative; 
+        return relative;
     }
 
     s.close(); // close the stream

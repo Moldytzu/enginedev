@@ -2,8 +2,9 @@
 
 void Engine::ECS::GameObjectManager::Add(Engine::ECS::GameObject *obj)
 {
-    gameobjects.push_back(obj); // push the object
-    obj->Start();               // start it
+    obj->Name = obj->FriendlyName(); // set its name to the friendly name. TODO: accept new name
+    gameobjects.push_back(obj);      // push the object
+    obj->Start();                    // start it
 }
 
 void Engine::ECS::GameObjectManager::Delete(Engine::ECS::GameObject *obj)

@@ -24,6 +24,9 @@ namespace Engine::ECS
         virtual std::string FriendlyName();
 
         void AddComponent(Component *component);
+        void DeleteComponent(Component *component);
+        
+        Component *GetComponent(std::string friendlyName);
 
         std::string Name;
         glm::vec3 Position;
