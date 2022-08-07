@@ -15,6 +15,7 @@ SRC = $(call rwildcard,$(SRCDIR),*.cpp)
 OBJS = $(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SRC))
 
 lib: $(OBJS)
+	mkdir -p $(BINDIR)
 	$(AR) -crs $(LIB) $(OBJS) 
 
 clean:
