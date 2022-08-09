@@ -15,7 +15,7 @@ namespace Engine::Render
 
         Transform();
 
-        void Translate(glm::vec3 offset);
+        Transform *Translate(glm::vec3 offset);
     };
 
     struct VertexBuffers

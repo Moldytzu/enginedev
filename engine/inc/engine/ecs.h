@@ -26,8 +26,8 @@ namespace Engine::ECS
 
         virtual std::string FriendlyName();
 
-        void AddComponent(Component *component);
-        void DeleteComponent(Component *component);
+        Component *AddComponent(Component *component);
+        Component *DeleteComponent(Component *component);
         
         Component *GetComponent(std::string friendlyName);
 
@@ -39,8 +39,8 @@ namespace Engine::ECS
     class GameObjectManager
     {
     public:
-        void Add(GameObject *obj);
-        void Add(GameObject *obj, std::string name);
+        GameObject *Add(GameObject *obj);
+        GameObject *Add(GameObject *obj, std::string name);
 
         void Delete(GameObject *obj);
         void Update();

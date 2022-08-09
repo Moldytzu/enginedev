@@ -10,12 +10,12 @@ bool Engine::ECS::GameObjectManager::Exists(std::string name)
     return false;
 }
 
-void Engine::ECS::GameObjectManager::Add(Engine::ECS::GameObject *obj)
+Engine::ECS::GameObject *Engine::ECS::GameObjectManager::Add(Engine::ECS::GameObject *obj)
 {
-    Add(obj, obj->FriendlyName()); // don't use any fancy name, just the friendly name itself
+    return Add(obj, obj->FriendlyName()); // don't use any fancy name, just the friendly name itself
 }
 
-void Engine::ECS::GameObjectManager::Add(Engine::ECS::GameObject *obj, std::string name)
+Engine::ECS::GameObject *Engine::ECS::GameObjectManager::Add(Engine::ECS::GameObject *obj, std::string name)
 {
     if (Exists(name)) // check if an object with that name exists
     {
@@ -31,6 +31,7 @@ void Engine::ECS::GameObjectManager::Add(Engine::ECS::GameObject *obj, std::stri
     obj->Name = name;           // set the name
     gameobjects.push_back(obj); // push the object
     obj->Start();               // start it
+    return obj;
 }
 
 void Engine::ECS::GameObjectManager::Delete(Engine::ECS::GameObject *obj)

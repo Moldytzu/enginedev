@@ -57,8 +57,7 @@ class MyPlane : public Engine::ECS::GameObject
 public:
     void Start()
     {
-        AddComponent(new PlaneRenderer);                                                                             // TODO: make this function return the added component
-        GetComponent("PlaneRenderer")->Public.SetString("texturePath", "bricks.jpg")->SetBool("flushTexture", true); // set the texture path and flush the texture
+        AddComponent(new PlaneRenderer)->Public.SetString("texturePath", "bricks.jpg")->SetBool("flushTexture", true); // set the texture path and flush the texture
     }
 
     void Update()

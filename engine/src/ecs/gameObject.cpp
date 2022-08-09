@@ -10,19 +10,20 @@ void Engine::ECS::GameObject::Update()
         Components[i]->Update();
 }
 
-void Engine::ECS::GameObject::AddComponent(Engine::ECS::Component *component)
+Engine::ECS::Component *Engine::ECS::GameObject::AddComponent(Engine::ECS::Component *component)
 {
     CHECK_CLASS;
     Engine::Core::Logger::LogDebug("Adding component " + component->FriendlyName() + " to " + Name);
     Components.push_back(component); // push the component
     component->Start();              // start it
+    return component;
 }
 
-void Engine::ECS::GameObject::DeleteComponent(Component *component)
+Engine::ECS::Component *Engine::ECS::GameObject::DeleteComponent(Component *component)
 {
     CHECK_CLASS;
     if (component == nullptr) // don't fiddle with null addresses
-        return;
+        return component;
 
     for (int i = 0; i < Components.size(); i++) // itterate on every component
     {
@@ -32,9 +33,11 @@ void Engine::ECS::GameObject::DeleteComponent(Component *component)
             Components.erase(Components.begin() + i); // erase at the position
             delete component;                         // delete the component
 
-            return;
+            return component;
         }
     }
+
+    return nullptr;
 }
 
 Engine::ECS::Component *Engine::ECS::GameObject::GetComponent(std::string friendlyName)
