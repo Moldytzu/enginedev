@@ -57,9 +57,8 @@ class MyPlane : public Engine::ECS::GameObject
 public:
     void Start()
     {
-        AddComponent(new PlaneRenderer);                                              // TODO: make this function return the added component
-        GetComponent("PlaneRenderer")->Public.SetString("texturePath", "bricks.jpg"); // and this the any class to make daisy chaining easy
-        GetComponent("PlaneRenderer")->Public.SetBool("flushTexture", true);          // flush the texture
+        AddComponent(new PlaneRenderer);                                                                             // TODO: make this function return the added component
+        GetComponent("PlaneRenderer")->Public.SetString("texturePath", "bricks.jpg")->SetBool("flushTexture", true); // set the texture path and flush the texture
     }
 
     void Update()

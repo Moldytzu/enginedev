@@ -1,29 +1,34 @@
 #include <engine/core.h>
 #include <iostream>
 
-void Engine::Core::Any::SetString(std::string key, std::string value)
+Engine::Core::Any *Engine::Core::Any::SetString(std::string key, std::string value)
 {
     map[key] = value;
+    return this;
 }
 
-void Engine::Core::Any::SetInt(std::string key, int value)
+Engine::Core::Any *Engine::Core::Any::SetInt(std::string key, int value)
 {
     map[key] = value;
+    return this;
 }
 
-void Engine::Core::Any::SetFloat(std::string key, float value)
+Engine::Core::Any *Engine::Core::Any::SetFloat(std::string key, float value)
 {
     map[key] = value;
+    return this;
 }
 
-void Engine::Core::Any::SetBool(std::string key, bool value)
+Engine::Core::Any *Engine::Core::Any::SetBool(std::string key, bool value)
 {
     map[key] = value;
+    return this;
 }
 
-void Engine::Core::Any::SetVec3(std::string key, glm::vec3 value)
+Engine::Core::Any *Engine::Core::Any::SetVec3(std::string key, glm::vec3 value)
 {
     map[key] = value;
+    return this;
 }
 
 std::string Engine::Core::Any::GetString(std::string key)
