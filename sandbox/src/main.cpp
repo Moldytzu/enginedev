@@ -2,6 +2,7 @@
 #include <engine/render.h>
 #include <engine/ecs.h>
 #include <iostream>
+#include <time.h>
 
 class PlaneRenderer : public Engine::ECS::Component
 {
@@ -40,9 +41,9 @@ public:
         }
         else
         {
-            Engine::Render::Transform transform;                                       // transform of the vertices TODO: use parent's transform
-            transform.Scale(glm::vec3(2))->Rotate(90, glm::vec3(0.45f, 0.65f, 0.13f)); // scale it by 2 and rotate it
-            Engine::Render::GlobalRenderer->Draw(buffers, transform);                  // draw the vertices
+            float speed = 100 * Engine::Render::GlobalRenderer->DeltaTime;
+            Parent->Transform.Rotate(1 * speed, glm::vec3(0.05f * speed, 0.01f * speed, 0.03f * speed));     // scale it by 2 and rotate it
+            Engine::Render::GlobalRenderer->Draw(buffers, Parent->Transform); // draw the vertices
         }
     }
 
@@ -73,6 +74,7 @@ public:
 
 void Engine::Core::Application::Start()
 {
+    srand(time(nullptr));
     Engine::ECS::GlobalGameObjectManager->Add(new MyPlane);
     Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 1, -10)); // translate the camera up and back
 }

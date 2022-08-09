@@ -75,7 +75,7 @@ namespace Engine::Render
         Transform CameraTransform;
         glm::mat4 CameraProjection;
 
-        float DeltaTime;
+        double DeltaTime;
 
     private:
         std::vector<int> shaders;

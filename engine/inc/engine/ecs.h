@@ -2,11 +2,14 @@
 #include <engine/vendor/glm/common.hpp>
 #include <engine/vendor/glm/fwd.hpp>
 #include <engine/core.h>
+#include <engine/render.h>
 #include <vector>
 #include <string>
 
 namespace Engine::ECS
 {
+    class GameObject;
+
     class Component
     {
     public:
@@ -16,6 +19,7 @@ namespace Engine::ECS
         virtual std::string FriendlyName();
 
         Engine::Core::Any Public;
+        GameObject *Parent;    
     };
 
     class GameObject
@@ -32,7 +36,7 @@ namespace Engine::ECS
         Component *GetComponent(std::string friendlyName);
 
         std::string Name;
-        glm::vec3 Position;
+        Engine::Render::Transform Transform;
         std::vector<Component *> Components;
     };
 

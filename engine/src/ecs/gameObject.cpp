@@ -16,6 +16,7 @@ Engine::ECS::Component *Engine::ECS::GameObject::AddComponent(Engine::ECS::Compo
     Engine::Core::Logger::LogDebug("Adding component " + component->FriendlyName() + " to " + Name);
     Components.push_back(component); // push the component
     component->Start();              // start it
+    component->Parent = this;        // set the parent
     return component;
 }
 

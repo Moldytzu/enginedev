@@ -99,9 +99,20 @@ void Engine::Render::Renderer::Init()
     glfwSwapInterval(0); // disable VSYNC
 }
 
+double currentFrame, lastFrame;
+
 void Engine::Render::Renderer::StartFrame()
 {
-    lastTime = glfwGetTime();
+    // delta time calculation
+    currentFrame = glfwGetTime();
+    DeltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+
+    if (glfwGetTime() - (int)glfwGetTime() <= 0.01f) // update the title roughfly every second
+    {
+        std::string title = std::to_string((int)(1 / DeltaTime)) + " FPS"; // create the title
+        glfwSetWindowTitle(window, title.c_str());                         // set the title
+    }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the window and the depth buffer
 
@@ -110,14 +121,6 @@ void Engine::Render::Renderer::StartFrame()
 
 void Engine::Render::Renderer::EndFrame()
 {
-    DeltaTime = glfwGetTime() - lastTime; // determine time needed to draw a frame
-
-    if (glfwGetTime() - (int)glfwGetTime() <= 0.01f) // update the title roughfly every second
-    {
-        std::string title = std::to_string((int)(1 / DeltaTime)) + " FPS"; // create the title
-        glfwSetWindowTitle(window, title.c_str());                         // set the title
-    }
-
     glfwSwapBuffers(window); // swap the buffers
     glfwPollEvents();        // poll for the events
 }
