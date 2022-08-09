@@ -25,14 +25,19 @@ public:
 
     void Start()
     {
-        Public.SetString("texturePath", "");
+        // initial public variables states
+        Public.SetString("texturePath", "");   // path to the texture
+        Public.SetBool("flushTexture", false); // flag to use when flushing texture and loading a new one
     }
 
     void Update()
     {
-        // generate buffers with necessary texture
-        if (buffers.vertices == 0 && Public.GetString("texturePath") != "")
-            buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices, Engine::Render::GlobalRenderer->DefaultShader, Engine::Render::GlobalRenderer->LoadTexture(Public.GetString("texturePath")));
+        // generate buffers if flush is requested
+        if (Public.GetBool("flushTexture"))
+        {
+            buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices, Engine::Render::GlobalRenderer->DefaultShader, Engine::Render::GlobalRenderer->LoadTexture(Public.GetString("texturePath"))); // generate new buffers
+            Public.SetBool("flushTexture", false);                                                                                                                                                            // reset flag state
+        }
         else
         {
             Engine::Render::Transform transform;                           // transform of the vertices TODO: use parent's transform
@@ -54,6 +59,7 @@ public:
     {
         AddComponent(new PlaneRenderer);                                              // TODO: make this function return the added component
         GetComponent("PlaneRenderer")->Public.SetString("texturePath", "bricks.jpg"); // and this the any class to make daisy chaining easy
+        GetComponent("PlaneRenderer")->Public.SetBool("flushTexture", true);          // flush the texture
     }
 
     void Update()
