@@ -41,9 +41,9 @@ public:
         }
         else
         {
-            float speed = 100 * Engine::Render::GlobalRenderer->DeltaTime;
-            Parent->Transform.Rotate(1 * speed, glm::vec3(0.05f * speed, 0.01f * speed, 0.03f * speed));     // scale it by 2 and rotate it
-            Engine::Render::GlobalRenderer->Draw(buffers, Parent->Transform); // draw the vertices
+            float speed = 200 * Engine::Render::GlobalRenderer->DeltaTime;
+            Parent->Transform.Rotate(1 * speed, glm::vec3(Engine::Core::Random::Float(0, 1) * speed, Engine::Core::Random::Float(0, 1) * speed, Engine::Core::Random::Float(0, 1) * speed)); // scale it by 2 and rotate it randomly
+            Engine::Render::GlobalRenderer->Draw(buffers, Parent->Transform);                                                                                                                // draw the vertices
         }
     }
 
@@ -74,7 +74,6 @@ public:
 
 void Engine::Core::Application::Start()
 {
-    srand(time(nullptr));
     Engine::ECS::GlobalGameObjectManager->Add(new MyPlane);
     Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 1, -10)); // translate the camera up and back
 }
