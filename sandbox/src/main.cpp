@@ -40,9 +40,9 @@ public:
         }
         else
         {
-            Engine::Render::Transform transform;                      // transform of the vertices TODO: use parent's transform
-            transform.Scale(glm::vec3(2));                            // scale it by 2
-            Engine::Render::GlobalRenderer->Draw(buffers, transform); // draw the vertices
+            Engine::Render::Transform transform;                                       // transform of the vertices TODO: use parent's transform
+            transform.Scale(glm::vec3(2))->Rotate(90, glm::vec3(0.45f, 0.65f, 0.13f)); // scale it by 2 and rotate it
+            Engine::Render::GlobalRenderer->Draw(buffers, transform);                  // draw the vertices
         }
     }
 
@@ -74,7 +74,7 @@ public:
 void Engine::Core::Application::Start()
 {
     Engine::ECS::GlobalGameObjectManager->Add(new MyPlane);
-    Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 1, -5)); // translate the camera up and back
+    Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 1, -10)); // translate the camera up and back
 }
 
 void Engine::Core::Application::Update()
