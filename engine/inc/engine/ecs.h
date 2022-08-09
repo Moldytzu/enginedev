@@ -1,6 +1,7 @@
 #pragma once
 #include <engine/vendor/glm/common.hpp>
 #include <engine/vendor/glm/fwd.hpp>
+#include <engine/core.h>
 #include <vector>
 #include <string>
 

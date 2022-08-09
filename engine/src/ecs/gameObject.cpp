@@ -13,6 +13,7 @@ void Engine::ECS::GameObject::Update()
 void Engine::ECS::GameObject::AddComponent(Engine::ECS::Component *component)
 {
     CHECK_CLASS;
+    Engine::Core::Logger::LogDebug("Adding component " + component->FriendlyName() + " to " + Name);
     Components.push_back(component); // push the component
     component->Start();              // start it
 }
@@ -27,6 +28,7 @@ void Engine::ECS::GameObject::DeleteComponent(Component *component)
     {
         if (Components[i] == component)
         {
+            Engine::Core::Logger::LogDebug("Deleting component " + component->FriendlyName() + " from " + Name);
             Components.erase(Components.begin() + i); // erase at the position
             delete component;                         // delete the component
 
@@ -40,9 +42,9 @@ Engine::ECS::Component *Engine::ECS::GameObject::GetComponent(std::string friend
     CHECK_CLASS;
     for (int i = 0; i < Components.size(); i++) // itterate on every component
     {
-        Engine::Core::Logger::LogDebug(Components[i]->FriendlyName());
         if (Components[i]->FriendlyName() == friendlyName) // compare names
         {
+            Engine::Core::Logger::LogDebug("Returning component " + Components[i]->FriendlyName() + " from " + Name);
             return Components[i];
         }
     }
