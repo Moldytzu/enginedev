@@ -4,5 +4,5 @@ Engine::Render::Transform::Transform() : Matrix{glm::mat4(1.0f)} {} // create a 
 
 void Engine::Render::Transform::Translate(glm::vec3 offset)
 {
-    Matrix = glm::translate(Matrix, offset); // translate with an offset
+    Matrix = glm::translate(Matrix, glm::vec3(-offset.x, -offset.y, offset.z)); // translate with an offset
 }

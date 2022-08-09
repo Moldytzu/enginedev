@@ -13,6 +13,8 @@ namespace Engine::ECS
         virtual void Update();
 
         virtual std::string FriendlyName();
+
+        Engine::Core::Any Public;
     };
 
     class GameObject
