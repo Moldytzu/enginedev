@@ -16,6 +16,10 @@ namespace Engine::Render
         Transform();
 
         Transform *Translate(glm::vec3 offset);
+        Transform *Scale(glm::vec3 axisFactor);
+        Transform *Rotate(float degrees, glm::vec3 axis);
+
+        Transform *Reset();
     };
 
     struct VertexBuffers

@@ -40,9 +40,9 @@ public:
         }
         else
         {
-            Engine::Render::Transform transform;                           // transform of the vertices TODO: use parent's transform
-            transform.Matrix = glm::scale(transform.Matrix, glm::vec3(2)); // scale it by 2 TODO: implemet it as a wrapped function
-            Engine::Render::GlobalRenderer->Draw(buffers, transform);      // draw the vertices
+            Engine::Render::Transform transform;                      // transform of the vertices TODO: use parent's transform
+            transform.Scale(glm::vec3(2));                            // scale it by 2
+            Engine::Render::GlobalRenderer->Draw(buffers, transform); // draw the vertices
         }
     }
 
@@ -57,7 +57,7 @@ class MyPlane : public Engine::ECS::GameObject
 public:
     void Start()
     {
-        AddComponent(new PlaneRenderer)->Public.SetString("texturePath", "bricks.jpg")->SetBool("flushTexture", true); // set the texture path and flush the texture
+        AddComponent(new PlaneRenderer)->Public.SetString("texturePath", "bricks.jpg")->SetBool("flushTexture", true); // add the renderer and then set the texture path and flush the texture
     }
 
     void Update()
