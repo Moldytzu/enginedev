@@ -6,6 +6,9 @@ int main(int argc, char *argv[])
 {
     Engine::Core::Logger::LogInfo("Starting up the engine");
 
+    // set the seed for rng
+    srand(time(nullptr));
+
     // instantiate the required classes
     Engine::Core::Application application; // this class is implemented by the application that uses this engine
     Engine::Render::Renderer renderer;

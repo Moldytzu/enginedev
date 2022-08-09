@@ -50,4 +50,11 @@ namespace Engine::Core
         static std::string ParseRelativePath(std::string relative);
     };
 
+    class Random
+    {
+    public:
+        static int Int(int low, int high);
+        static float Float(float low, float high);
+    };
+
 };
