@@ -156,7 +156,7 @@ void Engine::Render::Renderer::Init()
     resize(window, windowWidth, windowHeight); // simulate a resize event to regenerate the super sampling framebuffer
 }
 
-double currentFrame, lastFrame;
+double currentFrame, lastFrame, updateTitleTimer = 0;
 
 void Engine::Render::Renderer::StartFrame()
 {
@@ -165,8 +165,9 @@ void Engine::Render::Renderer::StartFrame()
     DeltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
-    if (glfwGetTime() - (int)glfwGetTime() <= 0.01f) // update the title roughfly every second
+    if (currentFrame >= updateTitleTimer + 1) // update the title roughfly every second
     {
+        updateTitleTimer = currentFrame;                                   // reset timer
         std::string title = std::to_string((int)(1 / DeltaTime)) + " FPS"; // create the title
         glfwSetWindowTitle(window, title.c_str());                         // set the title
     }
