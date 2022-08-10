@@ -41,7 +41,7 @@ public:
         }
         else
         {
-            float speed = 200 * Engine::Render::GlobalRenderer->DeltaTime;
+            float speed = 10 * Engine::Render::GlobalRenderer->DeltaTime;
             Parent->Transform.Rotate(1 * speed, glm::vec3(Engine::Core::Random::Float(0, 1) * speed, Engine::Core::Random::Float(0, 1) * speed, Engine::Core::Random::Float(0, 1) * speed)); // scale it by 2 and rotate it randomly
             Engine::Render::GlobalRenderer->Draw(buffers, Parent->Transform);                                                                                                                // draw the vertices
         }

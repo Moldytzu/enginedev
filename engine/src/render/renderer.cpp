@@ -71,6 +71,13 @@ void recreateOffScreenBuffer()
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, drawWidth, drawHeight);           // use a single renderbuffer object for both a depth AND stencil buffer.
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rBO); // now actually attach it
 
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        Engine::Core::Logger::LogError("Failed to create off-screen super-sampling framebuffer object! Disabling super sampling.");
+        superSampling = false;                                               // disable super sampling
+        drawHeight /= superSamplingFactor, drawWidth /= superSamplingFactor; // set the draw resolution to the window's resolution
+    }
+
     // bind back the default draw buffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -83,8 +90,8 @@ void resize(GLFWwindow *window, int width, int height)
 
     if (superSampling)
     {
-        drawHeight = superSamplingFactor * drawHeight, drawWidth = superSamplingFactor * drawWidth; // multiply the resolution by the super sampling factor
-        recreateOffScreenBuffer();                                                                  // recreate the offscreen buffer
+        drawHeight *= superSamplingFactor, drawWidth *= superSamplingFactor; // multiply the resolution by the super sampling factor
+        recreateOffScreenBuffer();                                           // recreate the offscreen buffer
     }
 
     glViewport(0, 0, drawWidth, drawHeight); // reset the viewport
