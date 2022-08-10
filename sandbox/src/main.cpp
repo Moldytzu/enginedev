@@ -75,7 +75,7 @@ public:
 void Engine::Core::Application::Start()
 {
     Engine::ECS::GlobalGameObjectManager->Add(new MyPlane);
-    Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 1, -10)); // translate the camera up and back
+    Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 1, -2)); // translate the camera up and back
 }
 
 void Engine::Core::Application::Update()

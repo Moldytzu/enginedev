@@ -8,8 +8,12 @@
 #include <iostream>
 #include <filesystem>
 
-GLFWwindow *window;
-double lastTime;
+GLFWwindow *window = nullptr;  // stores the glfw context
+unsigned int ssFBO, rBO, tcBO; // super sampling frame buffer object, rendering buffer object, texture color buffer object
+int windowWidth, windowHeight; // stores the current window size
+int drawWidth, drawHeight;     // stores the current rendering framebuffer size
+bool superSampling = true;     // toggle for super sampling
+int superSamplingFactor = 2;   // draw at 2x resolution
 
 std::string vertex =
     "#version 330 core\n"
@@ -39,9 +43,51 @@ std::string fragment =
     "   FragColor = texture(texture1, texturePosition) * vec4(vertexColour, 1.0);\n"
     "}\n\0";
 
+void recreateOffScreenBuffer()
+{
+    static bool generated = false;
+    if (generated == true)
+    {
+        glDeleteTextures(1, &tcBO);      // delete the color attachment texture
+        glDeleteRenderbuffers(1, &rBO);  // delete the render buffer object
+        glDeleteFramebuffers(1, &ssFBO); // delete the frame buffer
+    }
+
+    // generate a new framebuffer
+    glGenFramebuffers(1, &ssFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, ssFBO);
+
+    // create a color attachment texture
+    glGenTextures(1, &tcBO);
+    glBindTexture(GL_TEXTURE_2D, tcBO);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, drawWidth, drawHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tcBO, 0);
+
+    // create a renderbuffer object for depth and stencil attachment
+    glGenRenderbuffers(1, &rBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, rBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, drawWidth, drawHeight);           // use a single renderbuffer object for both a depth AND stencil buffer.
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rBO); // now actually attach it
+
+    // bind back the default draw buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    generated = true; // set the flag used to detect if we already created a buffer
+}
+
 void resize(GLFWwindow *window, int width, int height)
 {
-    glViewport(0, 0, width, height); // reset the viewport
+    windowWidth = drawWidth = width, windowHeight = drawHeight = height;
+
+    if (superSampling)
+    {
+        drawHeight = superSamplingFactor * drawHeight, drawWidth = superSamplingFactor * drawWidth; // multiply the resolution by the super sampling factor
+        recreateOffScreenBuffer();                                                                  // recreate the offscreen buffer
+    }
+
+    glViewport(0, 0, drawWidth, drawHeight); // reset the viewport
 }
 
 void Engine::Render::Renderer::Init()
@@ -56,6 +102,7 @@ void Engine::Render::Renderer::Init()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
+    windowWidth = 640, windowHeight = 480;
     window = glfwCreateWindow(640, 480, "Main Window", NULL, NULL); // create the main window
     if (window == NULL)
     {
@@ -72,9 +119,9 @@ void Engine::Render::Renderer::Init()
 
     glfwSetFramebufferSizeCallback(window, resize); // resize callback
 
-    glEnable(GL_DEPTH);                   // depth checking
-    glViewport(0, 0, 640, 480);           // set the viewport
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f); // grayish colour
+    glfwSwapInterval(0); // disable VSYNC
+
+    glEnable(GL_DEPTH); // enable depth checking
 
     // create first empty texture
     unsigned int texture;
@@ -96,7 +143,10 @@ void Engine::Render::Renderer::Init()
     CameraProjection = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 100.0f); // generate projection
     glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(CameraProjection));           // set the projection
 
-    glfwSwapInterval(0); // disable VSYNC
+    glViewport(0, 0, drawWidth, drawHeight); // set the viewport
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);    // grayish colour
+
+    resize(window, windowWidth, windowHeight); // simulate a resize event to regenerate the super sampling framebuffer
 }
 
 double currentFrame, lastFrame;
@@ -114,6 +164,12 @@ void Engine::Render::Renderer::StartFrame()
         glfwSetWindowTitle(window, title.c_str());                         // set the title
     }
 
+    // use the super sampling framebuffer if enabled
+    if (superSampling)
+        glBindFramebuffer(GL_FRAMEBUFFER, ssFBO);
+    else
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the window and the depth buffer
 
     glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(CameraTransform.Matrix)); // set the camera transform matrix
@@ -121,6 +177,12 @@ void Engine::Render::Renderer::StartFrame()
 
 void Engine::Render::Renderer::EndFrame()
 {
+    if (superSampling)
+    {
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);     // bind the default framebuffer used to copy the super sampling frame buffer
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, ssFBO); // bind the super sampling framebuffer used to read the drawn stuff
+        glBlitFramebuffer(0, 0, drawWidth, drawHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    }
     glfwSwapBuffers(window); // swap the buffers
     glfwPollEvents();        // poll for the events
 }
