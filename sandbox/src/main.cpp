@@ -4,34 +4,21 @@
 #include <iostream>
 #include <time.h>
 
-class PlaneRenderer : public Engine::ECS::Component
+class BaseRenderer : public Engine::ECS::Component
 {
-private:
+protected:
     Engine::Render::VertexBuffers buffers;
+    std::vector<Engine::Render::Vertex> vertices;
 
 public:
-    std::vector<Engine::Render::Vertex> vertices =
-        {
-            // left triangle
-            Engine::Render::Vertex(-1, 0, 1, 1, 1, 1, 0, 1),  // left-top
-            Engine::Render::Vertex(-1, 0, -1, 1, 1, 1, 0, 0), // left-bottom
-            Engine::Render::Vertex(1, 0, -1, 1, 1, 1, 1, 0),  // right-bottom
-
-            // right triangle
-            Engine::Render::Vertex(1, 0, 1, 1, 1, 1, 1, 1),  // right-top corner
-            Engine::Render::Vertex(1, 0, -1, 1, 1, 1, 1, 0), // right-bottom
-            Engine::Render::Vertex(-1, 0, 1, 1, 1, 1, 0, 1), // left-top
-
-        };
-
-    void Start()
+    virtual void Start()
     {
         // initial public variables states
         Public.SetString("texturePath", "");   // path to the texture
         Public.SetBool("flushTexture", false); // flag to use when flushing texture and loading a new one
     }
 
-    void Update()
+    virtual void Update()
     {
         // generate buffers if flush is requested
         if (Public.GetBool("flushTexture"))
@@ -39,12 +26,37 @@ public:
             buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices, Engine::Render::GlobalRenderer->DefaultShader, Engine::Render::GlobalRenderer->LoadTexture(Public.GetString("texturePath"))); // generate new buffers
             Public.SetBool("flushTexture", false);                                                                                                                                                            // reset flag state
         }
-        else
-        {
-            float speed = 10 * Engine::Render::GlobalRenderer->DeltaTime;
-            Parent->Transform.Rotate(1 * speed, glm::vec3(Engine::Core::Random::Float(0, 1) * speed, Engine::Core::Random::Float(0, 1) * speed, Engine::Core::Random::Float(0, 1) * speed)); // scale it by 2 and rotate it randomly
-            Engine::Render::GlobalRenderer->Draw(buffers, Parent->Transform);                                                                                                                // draw the vertices
-        }
+
+        Engine::Render::GlobalRenderer->Draw(buffers, Parent->Transform); // draw the vertices
+    }
+
+    virtual std::string FriendlyName()
+    {
+        return "BaseRenderer";
+    }
+};
+
+class PlaneRenderer : public BaseRenderer
+{
+public:
+    void Start()
+    {
+        BaseRenderer::Start(); // initialise the base renderer class
+        
+        // vertices information
+        vertices =
+            {
+                // left triangle
+                Engine::Render::Vertex(-1, 0, 1, 1, 1, 1, 0, 1),  // left-top
+                Engine::Render::Vertex(-1, 0, -1, 1, 1, 1, 0, 0), // left-bottom
+                Engine::Render::Vertex(1, 0, -1, 1, 1, 1, 1, 0),  // right-bottom
+
+                // right triangle
+                Engine::Render::Vertex(1, 0, 1, 1, 1, 1, 1, 1),  // right-top corner
+                Engine::Render::Vertex(1, 0, -1, 1, 1, 1, 1, 0), // right-bottom
+                Engine::Render::Vertex(-1, 0, 1, 1, 1, 1, 0, 1), // left-top
+
+            };
     }
 
     std::string FriendlyName()
@@ -64,6 +76,9 @@ public:
     void Update()
     {
         Engine::ECS::GameObject::Update(); // update components
+
+        float speed = 10 * Engine::Render::GlobalRenderer->DeltaTime;
+        Transform.Rotate(1 * speed, glm::vec3(Engine::Core::Random::Float(0, 1) * speed, Engine::Core::Random::Float(0, 1) * speed, Engine::Core::Random::Float(0, 1) * speed)); // rotate randomly
     }
 
     std::string FriendlyName()
