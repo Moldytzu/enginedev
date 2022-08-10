@@ -42,7 +42,7 @@ public:
     void Start()
     {
         BaseRenderer::Start(); // initialise the base renderer class
-        
+
         // vertices information
         vertices =
             {
@@ -55,6 +55,69 @@ public:
                 Engine::Render::Vertex(1, 0, 1, 1, 1, 1, 1, 1),  // right-top corner
                 Engine::Render::Vertex(1, 0, -1, 1, 1, 1, 1, 0), // right-bottom
                 Engine::Render::Vertex(-1, 0, 1, 1, 1, 1, 0, 1), // left-top
+
+            };
+    }
+
+    std::string FriendlyName()
+    {
+        return "PlaneRenderer";
+    }
+};
+
+class CubeRenderer : public BaseRenderer
+{
+public:
+    void Start()
+    {
+        BaseRenderer::Start(); // initialise the base renderer class
+
+        // vertices information
+        vertices =
+            {
+                // bottom face
+                // left triangle
+                Engine::Render::Vertex(-1, -1, 1, 1, 1, 1, 0, 1),  // left-top
+                Engine::Render::Vertex(-1, -1, -1, 1, 1, 1, 0, 0), // left-bottom
+                Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0),  // right-bottom
+
+                // right triangle
+                Engine::Render::Vertex(1, -1, 1, 1, 1, 1, 1, 1),  // right-top corner
+                Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
+                Engine::Render::Vertex(-1, -1, 1, 1, 1, 1, 0, 1), // left-top
+
+                // top face
+                // left triangle
+                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1),  // left-top
+                Engine::Render::Vertex(-1, 1, -1, 1, 1, 1, 0, 0), // left-bottom
+                Engine::Render::Vertex(1, 1, -1, 1, 1, 1, 1, 0),  // right-bottom
+
+                // right triangle
+                Engine::Render::Vertex(1, 1, 1, 1, 1, 1, 1, 1),  // right-top corner
+                Engine::Render::Vertex(1, 1, -1, 1, 1, 1, 1, 0), // right-bottom
+                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1), // left-top
+
+                // left face
+                // left triangle
+                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1),  // left-top
+                Engine::Render::Vertex(-1, -1, 1, 1, 1, 1, 0, 0), // left-bottom
+                Engine::Render::Vertex(-1, -1, -1, 1, 1, 1, 1, 0),  // right-bottom
+
+                // right triangle
+                Engine::Render::Vertex(-1, 1, -1, 1, 1, 1, 1, 1),  // right-top corner
+                Engine::Render::Vertex(-1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
+                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1), // left-top
+
+                // right face
+                // left triangle
+                Engine::Render::Vertex(1, 1, 1, 1, 1, 1, 0, 1),  // left-top
+                Engine::Render::Vertex(1, -1, 1, 1, 1, 1, 0, 0), // left-bottom
+                Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0),  // right-bottom
+
+                // right triangle
+                Engine::Render::Vertex(1, 1, -1, 1, 1, 1, 1, 1),  // right-top corner
+                Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
+                Engine::Render::Vertex(1, 1, 1, 1, 1, 1, 0, 1), // left-top
 
             };
     }
@@ -87,10 +150,32 @@ public:
     }
 };
 
+class MyCube : public Engine::ECS::GameObject
+{
+public:
+    void Start()
+    {
+        AddComponent(new CubeRenderer)->Public.SetString("texturePath", "bricks.jpg")->SetBool("flushTexture", true); // add the renderer and then set the texture path and flush the texture
+    }
+
+    void Update()
+    {
+        Engine::ECS::GameObject::Update(); // update components
+
+        float speed = 10 * Engine::Render::GlobalRenderer->DeltaTime;
+        Transform.Rotate(1 * speed, glm::vec3(Engine::Core::Random::Float(0, 1) * speed, Engine::Core::Random::Float(0, 1) * speed, Engine::Core::Random::Float(0, 1) * speed)); // rotate randomly
+    }
+
+    std::string FriendlyName()
+    {
+        return "MyCube";
+    }
+};
+
 void Engine::Core::Application::Start()
 {
-    Engine::ECS::GlobalGameObjectManager->Add(new MyPlane);
-    Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 1, -2)); // translate the camera up and back
+    Engine::ECS::GlobalGameObjectManager->Add(new MyCube);
+    Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 1, -5)); // translate the camera up and back
 }
 
 void Engine::Core::Application::Update()
