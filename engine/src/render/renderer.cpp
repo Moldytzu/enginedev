@@ -110,7 +110,7 @@ void resize(GLFWwindow *window, int width, int height)
     if (fixedAspectRatio)
         ratio = fixedAspectRatioValue;
 
-    instance->CameraProjection = glm::perspective(glm::radians(fov), ratio, 0.1f, 100.0f);                   // generate projection
+    instance->CameraProjection = glm::perspective(glm::radians(fov), ratio, 0.1f, 100.0f);                     // generate projection
     glUniformMatrix4fv(instance->projectionLocation, 1, GL_FALSE, glm::value_ptr(instance->CameraProjection)); // set the projection
 }
 
@@ -368,5 +368,14 @@ bool Engine::Render::Renderer::Open()
 Engine::Render::Renderer::~Renderer()
 {
     Engine::Core::Logger::LogDebug("Destroying the renderer");
+
+    // delete the shaders
+    for (size_t s = 0; s < shaders.size(); s++)
+        glDeleteProgram(shaders[s]);
+
+    glDeleteTextures(1, &tcBO);      // delete the color attachment texture
+    glDeleteRenderbuffers(1, &rBO);  // delete the render buffer object
+    glDeleteFramebuffers(1, &ssFBO); // delete the frame buffer
+
     glfwTerminate();
 }
