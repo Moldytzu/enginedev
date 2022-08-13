@@ -8,11 +8,14 @@
 #include <iostream>
 #include <filesystem>
 
-Engine::Render::Renderer *instance = nullptr;  // instance of this
-GLFWwindow *window = nullptr;                  // stores the glfw context
-unsigned int ssFBO, rBO, tcBO;                 // super sampling frame buffer object, rendering buffer object, texture color buffer object
-int windowWidth, windowHeight;                 // stores the current window size
-int drawWidth, drawHeight;                     // stores the current rendering framebuffer size
+Engine::Render::Renderer *instance = nullptr; // instance of this
+GLFWwindow *window = nullptr;                 // stores the glfw context
+unsigned int ssFBO, rBO, tcBO;                // super sampling frame buffer object, rendering buffer object, texture color buffer object
+int windowWidth, windowHeight;                // stores the current window size
+int drawWidth, drawHeight;                    // stores the current rendering framebuffer size
+
+// settings (TODO: move this in a class)
+float fov = 90.0f;                             // field of view
 bool superSampling = true;                     // toggle for super sampling
 int superSamplingFactor = 2;                   // draw at 2x resolution
 bool fixedAspectRatio = false;                 // toggle for fixed aspect ratio used in perspective calculation
@@ -107,7 +110,7 @@ void resize(GLFWwindow *window, int width, int height)
     if (fixedAspectRatio)
         ratio = fixedAspectRatioValue;
 
-    instance->CameraProjection = glm::perspective(glm::radians(30.0f), ratio, 0.1f, 100.0f);                   // generate projection
+    instance->CameraProjection = glm::perspective(glm::radians(fov), ratio, 0.1f, 100.0f);                   // generate projection
     glUniformMatrix4fv(instance->projectionLocation, 1, GL_FALSE, glm::value_ptr(instance->CameraProjection)); // set the projection
 }
 
@@ -162,10 +165,8 @@ void Engine::Render::Renderer::Init()
     modelLocation = glGetUniformLocation(DefaultShader, "model");
     projectionLocation = glGetUniformLocation(DefaultShader, "projection");
 
-    resize(window, windowWidth, windowHeight); // simulate a resize event to regenerate the super sampling framebuffer
-
-    glViewport(0, 0, drawWidth, drawHeight); // set the viewport
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);    // grayish colour
+    resize(window, windowWidth, windowHeight); // simulate a resize event to regenerate the super sampling framebuffer and to properly calculate the perspective
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);      // grayish colour
 
     glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnistropicFiltering); // determine max anistropic filtering factor
 }
@@ -273,7 +274,7 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
 unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
 {
     unsigned int texture;
-    glGenTextures(1, &texture);                                   // generate a new texture                                 // generate texture
+    glGenTextures(1, &texture);                                   // generate a new texture
     glBindTexture(GL_TEXTURE_2D, texture);                        // bind texture
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping mode
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

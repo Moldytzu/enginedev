@@ -99,26 +99,47 @@ public:
 
                 // left face
                 // left triangle
-                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1),  // left-top
-                Engine::Render::Vertex(-1, -1, 1, 1, 1, 1, 0, 0), // left-bottom
-                Engine::Render::Vertex(-1, -1, -1, 1, 1, 1, 1, 0),  // right-bottom
+                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1),   // left-top
+                Engine::Render::Vertex(-1, -1, 1, 1, 1, 1, 0, 0),  // left-bottom
+                Engine::Render::Vertex(-1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
 
                 // right triangle
                 Engine::Render::Vertex(-1, 1, -1, 1, 1, 1, 1, 1),  // right-top corner
                 Engine::Render::Vertex(-1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
-                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1), // left-top
+                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1),   // left-top
 
                 // right face
                 // left triangle
-                Engine::Render::Vertex(1, 1, 1, 1, 1, 1, 0, 1),  // left-top
-                Engine::Render::Vertex(1, -1, 1, 1, 1, 1, 0, 0), // left-bottom
+                Engine::Render::Vertex(1, 1, 1, 1, 1, 1, 0, 1),   // left-top
+                Engine::Render::Vertex(1, -1, 1, 1, 1, 1, 0, 0),  // left-bottom
+                Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
+
+                // right triangle
+                Engine::Render::Vertex(1, 1, -1, 1, 1, 1, 1, 1),  // right-top corner
+                Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
+                Engine::Render::Vertex(1, 1, 1, 1, 1, 1, 0, 1),   // left-top
+
+                // front face
+                // left triangle
+                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1),  // left-top
+                Engine::Render::Vertex(-1, -1, 1, 1, 1, 1, 0, 0), // left-bottom
+                Engine::Render::Vertex(1, -1, 1, 1, 1, 1, 1, 0),  // right-bottom
+
+                // right triangle
+                Engine::Render::Vertex(1, 1, 1, 1, 1, 1, 1, 1),  // right-top corner
+                Engine::Render::Vertex(1, -1, 1, 1, 1, 1, 1, 0), // right-bottom
+                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1), // left-top
+
+                // back face
+                // left triangle
+                Engine::Render::Vertex(-1, 1, -1, 1, 1, 1, 0, 1),  // left-top
+                Engine::Render::Vertex(-1, -1, -1, 1, 1, 1, 0, 0), // left-bottom
                 Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0),  // right-bottom
 
                 // right triangle
                 Engine::Render::Vertex(1, 1, -1, 1, 1, 1, 1, 1),  // right-top corner
                 Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
-                Engine::Render::Vertex(1, 1, 1, 1, 1, 1, 0, 1), // left-top
-
+                Engine::Render::Vertex(-1, 1, -1, 1, 1, 1, 0, 1), // left-top
             };
     }
 
