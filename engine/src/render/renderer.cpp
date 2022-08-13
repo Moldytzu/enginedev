@@ -17,6 +17,9 @@ bool superSampling = true;                     // toggle for super sampling
 int superSamplingFactor = 2;                   // draw at 2x resolution
 bool fixedAspectRatio = false;                 // toggle for fixed aspect ratio used in perspective calculation
 float fixedAspectRatioValue = (float)(16 / 9); // fix to 16:9
+bool anistropicFiltering = true;               // toggle for anistropic filtering
+float targetAnistropicFiltering = 16.0f;       // factor for anistropic filtering
+float maxAnistropicFiltering;                  // to be filled by the driver
 
 std::string vertex =
     "#version 330 core\n"
@@ -104,7 +107,7 @@ void resize(GLFWwindow *window, int width, int height)
     if (fixedAspectRatio)
         ratio = fixedAspectRatioValue;
 
-    instance->CameraProjection = glm::perspective(glm::radians(90.0f), ratio, 0.1f, 100.0f);                   // generate projection
+    instance->CameraProjection = glm::perspective(glm::radians(30.0f), ratio, 0.1f, 100.0f);                   // generate projection
     glUniformMatrix4fv(instance->projectionLocation, 1, GL_FALSE, glm::value_ptr(instance->CameraProjection)); // set the projection
 }
 
@@ -163,6 +166,8 @@ void Engine::Render::Renderer::Init()
 
     glViewport(0, 0, drawWidth, drawHeight); // set the viewport
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);    // grayish colour
+
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnistropicFiltering); // determine max anistropic filtering factor
 }
 
 double currentFrame, lastFrame, updateTitleTimer = 0;
@@ -186,6 +191,13 @@ void Engine::Render::Renderer::StartFrame()
         glBindFramebuffer(GL_FRAMEBUFFER, ssFBO);
     else
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // enable anisotropic filtering if enabled
+    float anisoValue = glm::min(targetAnistropicFiltering, maxAnistropicFiltering);
+    if (!anistropicFiltering)
+        anisoValue = 1.0f;
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisoValue);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the window and the depth buffer
 
@@ -267,7 +279,7 @@ unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // linear (more blurry and slower) mipmapping
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
     int width, height, nrChannels;
 
