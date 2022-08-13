@@ -175,7 +175,7 @@ public:
 void Engine::Core::Application::Start()
 {
     Engine::ECS::GlobalGameObjectManager->Add(new MyCube);
-    Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 1, -5)); // translate the camera up and back
+    Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 0.5, -5)); // translate the camera up and back
 }
 
 void Engine::Core::Application::Update()

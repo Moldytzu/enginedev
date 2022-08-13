@@ -128,7 +128,9 @@ void Engine::Render::Renderer::Init()
 
     glfwSwapInterval(0); // disable VSYNC
 
-    glEnable(GL_DEPTH); // enable depth checking
+    resize(window, windowWidth, windowHeight); // simulate a resize event to regenerate the super sampling framebuffer
+
+    glEnable(GL_DEPTH_TEST); // enable depth checking
 
     // create first empty texture
     unsigned int texture;
@@ -152,8 +154,6 @@ void Engine::Render::Renderer::Init()
 
     glViewport(0, 0, drawWidth, drawHeight); // set the viewport
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);    // grayish colour
-
-    resize(window, windowWidth, windowHeight); // simulate a resize event to regenerate the super sampling framebuffer
 }
 
 double currentFrame, lastFrame, updateTitleTimer = 0;
