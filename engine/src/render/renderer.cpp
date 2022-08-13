@@ -8,12 +8,15 @@
 #include <iostream>
 #include <filesystem>
 
-GLFWwindow *window = nullptr;  // stores the glfw context
-unsigned int ssFBO, rBO, tcBO; // super sampling frame buffer object, rendering buffer object, texture color buffer object
-int windowWidth, windowHeight; // stores the current window size
-int drawWidth, drawHeight;     // stores the current rendering framebuffer size
-bool superSampling = true;     // toggle for super sampling
-int superSamplingFactor = 2;   // draw at 2x resolution
+Engine::Render::Renderer *instance = nullptr;  // instance of this
+GLFWwindow *window = nullptr;                  // stores the glfw context
+unsigned int ssFBO, rBO, tcBO;                 // super sampling frame buffer object, rendering buffer object, texture color buffer object
+int windowWidth, windowHeight;                 // stores the current window size
+int drawWidth, drawHeight;                     // stores the current rendering framebuffer size
+bool superSampling = true;                     // toggle for super sampling
+int superSamplingFactor = 2;                   // draw at 2x resolution
+bool fixedAspectRatio = false;                 // toggle for fixed aspect ratio used in perspective calculation
+float fixedAspectRatioValue = (float)(16 / 9); // fix to 16:9
 
 std::string vertex =
     "#version 330 core\n"
@@ -95,11 +98,21 @@ void resize(GLFWwindow *window, int width, int height)
     }
 
     glViewport(0, 0, drawWidth, drawHeight); // reset the viewport
+
+    // calculate the perspective
+    float ratio = drawWidth / drawHeight;
+    if (fixedAspectRatio)
+        ratio = fixedAspectRatioValue;
+
+    instance->CameraProjection = glm::perspective(glm::radians(90.0f), ratio, 0.1f, 100.0f);                   // generate projection
+    glUniformMatrix4fv(instance->projectionLocation, 1, GL_FALSE, glm::value_ptr(instance->CameraProjection)); // set the projection
 }
 
 void Engine::Render::Renderer::Init()
 {
     Engine::Core::Logger::LogDebug("Initialising the renderer");
+
+    instance = this;
 
     glfwInit();                                    // initialise glfw
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // hint that we want an opengl 3.3 core context
@@ -126,11 +139,9 @@ void Engine::Render::Renderer::Init()
 
     glfwSetFramebufferSizeCallback(window, resize); // resize callback
 
-    glfwSwapInterval(0); // disable VSYNC
+    glfwSwapInterval(0); // disable vertical sync
 
-    resize(window, windowWidth, windowHeight); // simulate a resize event to regenerate the super sampling framebuffer
-
-    glEnable(GL_DEPTH_TEST); // enable depth checking
+    glEnable(GL_DEPTH_TEST); // enable depth testing
 
     // create first empty texture
     unsigned int texture;
@@ -148,9 +159,7 @@ void Engine::Render::Renderer::Init()
     modelLocation = glGetUniformLocation(DefaultShader, "model");
     projectionLocation = glGetUniformLocation(DefaultShader, "projection");
 
-    // calculate the perspective
-    CameraProjection = glm::perspective(glm::radians(45.0f), (float)640 / (float)480, 0.1f, 100.0f); // generate projection
-    glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(CameraProjection));           // set the projection
+    resize(window, windowWidth, windowHeight); // simulate a resize event to regenerate the super sampling framebuffer
 
     glViewport(0, 0, drawWidth, drawHeight); // set the viewport
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);    // grayish colour

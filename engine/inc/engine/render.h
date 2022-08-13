@@ -77,9 +77,9 @@ namespace Engine::Render
 
         double DeltaTime;
 
+        unsigned int modelLocation, projectionLocation, viewLocation;
     private:
         std::vector<int> shaders;
-        unsigned int modelLocation, projectionLocation, viewLocation;
     };
 
     inline Renderer *GlobalRenderer;
