@@ -367,7 +367,7 @@ bool Engine::Render::Renderer::Open()
 
 Engine::Render::Renderer::~Renderer()
 {
-    Engine::Core::Logger::LogDebug("Destroying the renderer");
+    Engine::Core::Logger::LogDebug("Destroying the Renderer");
 
     // delete the shaders
     for (size_t s = 0; s < shaders.size(); s++)

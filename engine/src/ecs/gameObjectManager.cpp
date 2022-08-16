@@ -1,6 +1,14 @@
 #include <engine/ecs.h>
 #include <engine/core.h>
 
+Engine::ECS::GameObjectManager::~GameObjectManager()
+{
+    Engine::Core::Logger::LogDebug("Destroying the GameObjectManager");
+
+    for (int i = 0; i < gameobjects.size(); i++) // update every gameobject
+        delete gameobjects[i];
+}
+
 bool Engine::ECS::GameObjectManager::Exists(std::string name)
 {
     for (int i = 0; i < gameobjects.size(); i++) // search for the object
@@ -41,6 +49,7 @@ void Engine::ECS::GameObjectManager::Delete(Engine::ECS::GameObject *obj)
         if (gameobjects[i] == obj) // if found
         {
             Engine::Core::Logger::LogDebug("Erasing object with name " + gameobjects[i]->Name + " as " + obj->FriendlyName());
+            delete gameobjects[i];
             gameobjects.erase(i + gameobjects.begin()); // erase it
             return;
         }

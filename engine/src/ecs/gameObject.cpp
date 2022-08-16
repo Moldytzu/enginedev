@@ -3,6 +3,16 @@
 
 void Engine::ECS::GameObject::Start() {}
 std::string Engine::ECS::GameObject::FriendlyName() { return "Game Object"; }
+
+Engine::ECS::GameObject::~GameObject()
+{
+    CHECK_CLASS;
+    Engine::Core::Logger::LogDebug("Destroying " + Name + " object");
+
+    for (int i = 0; i < Components.size(); i++) // delete every component
+        delete Components[i];
+}
+
 void Engine::ECS::GameObject::Update()
 {
     CHECK_CLASS;

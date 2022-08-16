@@ -11,6 +11,12 @@ protected:
     std::vector<Engine::Render::Vertex> vertices;
 
 public:
+    ~BaseRenderer()
+    {
+        Engine::Core::Logger::LogDebug("Destroying renderer component");
+        buffers.Destroy(); // destroy the buffers
+    }
+
     virtual void Start()
     {
         // initial public variables states

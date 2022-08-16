@@ -27,6 +27,14 @@ namespace Engine::Render
         unsigned int VAO, VBO, shader, texture;
         size_t vertices;
 
+        void Destroy()
+        {
+            glDeleteProgram(shader);
+            glDeleteVertexArrays(1, &VAO);
+            glDeleteBuffers(1, &VBO);
+            glDeleteTextures(1, &texture);
+        }
+
         void Bind()
         {
             glUseProgram(shader);                  // shader
@@ -78,6 +86,7 @@ namespace Engine::Render
         double DeltaTime;
 
         unsigned int modelLocation, projectionLocation, viewLocation;
+
     private:
         std::vector<int> shaders;
     };

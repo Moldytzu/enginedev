@@ -13,6 +13,8 @@ namespace Engine::ECS
     class Component
     {
     public:
+        virtual ~Component() = 0;
+
         virtual void Start();
         virtual void Update();
 
@@ -35,6 +37,8 @@ namespace Engine::ECS
         
         Component *GetComponent(std::string friendlyName);
 
+        ~GameObject();
+
         std::string Name;
         Engine::Render::Transform Transform;
         std::vector<Component *> Components;
@@ -52,6 +56,7 @@ namespace Engine::ECS
         GameObject *Get(std::string name);
         bool Exists(std::string name);
 
+        ~GameObjectManager();
     private:
         std::vector<GameObject *> gameobjects;
     };
