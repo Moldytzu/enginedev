@@ -56,6 +56,12 @@ namespace Engine::Render
         Vertex(float x, float y) : x{x}, y{y}, z{0}, r{1}, g{1}, b{1}, tx{0}, ty{0} {}
     };
 
+    struct __Draw_Object
+    {
+        VertexBuffers vb;
+        Transform t;
+    };
+
     class Renderer
     {
     public:
@@ -89,6 +95,7 @@ namespace Engine::Render
 
     private:
         std::vector<int> shaders;
+        std::vector<__Draw_Object> renderQueue;
     };
 
     inline Renderer *GlobalRenderer;

@@ -187,6 +187,9 @@ void Engine::Render::Renderer::StartFrame()
         glfwSetWindowTitle(window, title.c_str());                         // set the title
     }
 
+    // clear the render queue
+    renderQueue.clear();
+
     // use the super sampling framebuffer if enabled
     if (superSampling)
         glBindFramebuffer(GL_FRAMEBUFFER, ssFBO);
@@ -207,6 +210,15 @@ void Engine::Render::Renderer::StartFrame()
 
 void Engine::Render::Renderer::EndFrame()
 {
+    // render everything
+    for (int i = 0; i < renderQueue.size(); i++)
+    {
+        __Draw_Object obj = renderQueue[i];
+        obj.vb.Bind();                                                                // bind the buffers
+        glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(obj.t.Matrix)); // pass the matrix of the transform
+        glDrawArrays(GL_TRIANGLES, 0, obj.vb.vertices);                               // draw
+    }
+
     if (superSampling)
     {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);     // bind the default framebuffer used to copy the super sampling frame buffer
@@ -355,9 +367,9 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vec
 
 void Engine::Render::Renderer::Draw(Engine::Render::VertexBuffers buffer, Engine::Render::Transform transform)
 {
-    buffer.Bind();                                                                    // bind the buffers
-    glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(transform.Matrix)); // pass the matrix of the transform
-    glDrawArrays(GL_TRIANGLES, 0, buffer.vertices);                                   // draw
+    __Draw_Object obj;                  // create instance of an internal object
+    obj.t = transform, obj.vb = buffer; // set its metadata
+    renderQueue.push_back(obj);         // push it on the render queue
 }
 
 bool Engine::Render::Renderer::Open()
