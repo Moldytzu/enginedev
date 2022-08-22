@@ -199,8 +199,18 @@ public:
     }
 };
 
+Engine::Core::ThreadManager t;
+
+void a() {std::cout << "a" << std::flush;}
+void b() {std::cout << "b" << std::flush;}
+void c() {std::cout << "c" << std::flush;}
+
 void Engine::Core::Application::Start()
-{
+{   
+    t.Queue([] {a();});
+    t.Queue([] {b();});
+    t.Queue([] {c();});
+
     Engine::ECS::GlobalGameObjectManager->Add(new MyCube);
     Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 0.5, -5)); // translate the camera up and back
 }

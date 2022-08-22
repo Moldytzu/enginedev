@@ -2,6 +2,10 @@
 #include <string>
 #include <unordered_map>
 #include <any>
+#include <thread>
+#include <mutex>
+#include <functional>
+#include <queue>
 #include <engine/vendor/glm/common.hpp>
 #include <engine/vendor/glm/fwd.hpp>
 
@@ -9,6 +13,23 @@
 
 namespace Engine::Core
 {
+    class ThreadManager
+    {
+    public:
+        ThreadManager();
+        ~ThreadManager();
+
+        void Queue(const std::function<void()> &job);
+        void Wait();
+
+    private:
+        void threadLoop();
+
+        std::mutex jobsMutex;
+        std::vector<std::thread> threads;
+        std::queue<std::function<void()>> jobs;
+    };
+
     class Any
     {
     public:
