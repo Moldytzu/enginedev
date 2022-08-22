@@ -1,7 +1,7 @@
 #include <engine/ecs.h>
 #include <engine/core.h>
 
-void Engine::ECS::GameObject::Start() {UNLOCK;}
+void Engine::ECS::GameObject::Start() { UNLOCK; }
 std::string Engine::ECS::GameObject::FriendlyName() { return "Game Object"; }
 
 Engine::ECS::GameObject::~GameObject()
@@ -18,7 +18,10 @@ void Engine::ECS::GameObject::Update()
     CHECK_CLASS;
     LOCK;
     for (int i = 0; i < Components.size(); i++) // update every component
-        Engine::Core::GlobalThreadManager->Queue([&] {Components[i]->Update();});
+    {
+        Engine::Core::GlobalThreadManager->Queue([ i, this ]() -> const auto{ Components[i]->Update(); });
+    }
+
     UNLOCK;
 }
 

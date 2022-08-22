@@ -10,7 +10,7 @@
 #include <engine/vendor/glm/fwd.hpp>
 
 #define CHECK_CLASS { if (this == nullptr) { Engine::Core::Logger::LogError(std::string("Null class accessed! (") + __FILE__ + ":" + std::to_string(__LINE__) + ")"); exit(-1); } }
-#define LOCK while(!mutex.try_lock())
+#define LOCK mutex.lock()
 #define UNLOCK mutex.unlock()
 
 namespace Engine::Core

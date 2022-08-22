@@ -86,9 +86,9 @@ namespace Engine::Render
 
         unsigned int LoadTexture(std::string path);
 
-        VertexBuffers GenerateBuffers(std::vector<Vertex> vertices, unsigned int shader, unsigned int texture);
-        VertexBuffers GenerateBuffers(std::vector<Vertex> vertices, unsigned int shader);
-        VertexBuffers GenerateBuffers(std::vector<Vertex> vertices);
+        VertexBuffers GenerateBuffers(std::vector<Vertex>& vertices, unsigned int shader, unsigned int texture);
+        VertexBuffers GenerateBuffers(std::vector<Vertex>& vertices, unsigned int shader);
+        VertexBuffers GenerateBuffers(std::vector<Vertex>& vertices);
 
         void Draw(VertexBuffers buffer, Transform transform);
 

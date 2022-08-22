@@ -195,6 +195,8 @@ void Engine::Render::Renderer::StartFrame()
     // clear the render queue
     renderQueue.clear();
 
+    glfwMakeContextCurrent(window);
+
     // use the super sampling framebuffer if enabled
     if (superSampling)
         glBindFramebuffer(GL_FRAMEBUFFER, ssFBO);
@@ -237,6 +239,7 @@ void Engine::Render::Renderer::EndFrame()
 unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::string fragment)
 {
     LOCK;
+    glfwMakeContextCurrent(window);
     // create shaders for vertex and fragment
     const char *vertexSrc = vertex.c_str(), *fragmentSrc = fragment.c_str();
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER), fragmentShader = glCreateShader(GL_FRAGMENT_SHADER), shaderProgram = glCreateProgram();
@@ -295,6 +298,7 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
 unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
 {
     LOCK;
+    glfwMakeContextCurrent(window);
     unsigned int texture;
     glGenTextures(1, &texture);                                   // generate a new texture
     glBindTexture(GL_TEXTURE_2D, texture);                        // bind texture
@@ -325,9 +329,10 @@ unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
     return texture;        // return the texture
 }
 
-Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> vertices, unsigned int shader, unsigned int texture)
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex>& vertices, unsigned int shader, unsigned int texture)
 {
     LOCK;
+    glfwMakeContextCurrent(window);
     size_t size = vertices.size() * 8 * sizeof(float); // size in bytes of the data stored in the vertices
 
     float *verts = new float[vertices.size() * 8]; // raw array that stores the raw data
@@ -369,12 +374,12 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vec
     return buffers;
 }
 
-Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> vertices, unsigned int shader)
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex>& vertices, unsigned int shader)
 {
     return GenerateBuffers(vertices, shader, 0);
 }
 
-Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> vertices)
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex>& vertices)
 {
     return GenerateBuffers(vertices, DefaultShader);
 }
@@ -396,7 +401,7 @@ bool Engine::Render::Renderer::Open()
 Engine::Render::Renderer::~Renderer()
 {
     Engine::Core::Logger::LogDebug("Destroying the Renderer");
-
+    glfwMakeContextCurrent(window);
     // delete the shaders
     for (size_t s = 0; s < shaders.size(); s++)
         glDeleteProgram(shaders[s]);
