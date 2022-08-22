@@ -38,6 +38,7 @@ void Engine::Core::ThreadManager::Queue(const std::function<void()> &job)
     jobsMutex.lock();   // lock the mutex so there isn't any data race
     jobs.push(job);     // push the job
     jobsMutex.unlock(); // make the jobs vector accessible
+    //job();
 }
 
 void Engine::Core::ThreadManager::Wait()

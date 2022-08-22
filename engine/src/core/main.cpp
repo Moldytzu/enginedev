@@ -10,24 +10,30 @@ int main(int argc, char *argv[])
     srand(time(nullptr));
 
     // instantiate the required classes
-    Engine::Core::Application application; // this class is implemented by the application that uses this engine
-    Engine::Render::Renderer renderer;
-    Engine::ECS::GameObjectManager manager;
+    Engine::Core::ThreadManager threadManager;        // main thread manager (9100)
+    Engine::Core::Application application;            // implemented by the application that uses this engine
+    Engine::Render::Renderer renderer;                // main opengl 3 renderer
+    Engine::ECS::GameObjectManager gameObjectManager; // main game object manager
 
     // set their address in the global scope
-    Engine::ECS::GlobalGameObjectManager = &manager;
+    Engine::ECS::GlobalGameObjectManager = &gameObjectManager;
     Engine::Render::GlobalRenderer = &renderer;
+    Engine::Core::GlobalThreadManager = &threadManager;
 
     renderer.Init();     // initialise the renderer
     application.Start(); // start the application
 
     while (renderer.Open())
     {
-        renderer.StartFrame(); // create new frame
-        application.Update();  // update the application on every tick
-        manager.Update();      // update the objects
-        renderer.EndFrame();   // terminate the frame
+        renderer.StartFrame();      // create new frame
+        application.Update();       // update the application on every tick
+        gameObjectManager.Update(); // update the objects
+        threadManager.Wait();       // wait for the threads to end their jobs
+        renderer.EndFrame(); // terminate the frame
     }
 
+    threadManager.Wait();
+
+    Engine::Core::Logger::LogInfo("Goodbye");
     return 0;
 }

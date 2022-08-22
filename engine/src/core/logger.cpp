@@ -5,22 +5,22 @@
 
 void Engine::Core::Logger::LogInfo(std::string msg)
 {
-    std::cout << "[INFO] " << msg << std::endl;
+    std::cout << "[INFO] " << msg << std::endl << std::flush;
 }
 
 void Engine::Core::Logger::LogWarn(std::string msg)
 {
-    std::cout << "[WARN] " << msg << std::endl;
+    std::cout << "[WARN] " << msg << std::endl << std::flush;
 }
 
 void Engine::Core::Logger::LogError(std::string msg)
 {
-    std::cout << "[ERROR] " << msg << std::endl;
+    std::cout << "[ERROR] " << msg << std::endl << std::flush;
 }
 
 void Engine::Core::Logger::LogDebug(std::string msg)
 {
 #ifdef DEBUG
-    std::cout << "[DEBUG] " << msg << std::endl;
+    std::cout << "[DEBUG] " << msg << std::endl << std::flush;
 #endif
 }

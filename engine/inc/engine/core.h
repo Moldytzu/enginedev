@@ -10,6 +10,8 @@
 #include <engine/vendor/glm/fwd.hpp>
 
 #define CHECK_CLASS { if (this == nullptr) { Engine::Core::Logger::LogError(std::string("Null class accessed! (") + __FILE__ + ":" + std::to_string(__LINE__) + ")"); exit(-1); } }
+#define LOCK while(!mutex.try_lock())
+#define UNLOCK mutex.unlock()
 
 namespace Engine::Core
 {
@@ -45,7 +47,9 @@ namespace Engine::Core
         bool GetBool(std::string key);
         glm::vec3 GetVec3(std::string key);
 
+        Any();
     private:
+        std::mutex mutex;
         std::unordered_map<std::string, std::any> map;
     };
 
@@ -78,4 +82,5 @@ namespace Engine::Core
         static float Float(float low, float high);
     };
 
+    inline ThreadManager *GlobalThreadManager;
 };

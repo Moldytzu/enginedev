@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <mutex>
 #include <engine/vendor/glad/glad.h>
 #include <engine/vendor/glm/glm.hpp>
 #include <engine/vendor/glm/gtc/matrix_transform.hpp>
@@ -20,6 +21,16 @@ namespace Engine::Render
         Transform *Rotate(float degrees, glm::vec3 axis);
 
         Transform *Reset();
+
+        Transform(const Transform &obj) : Matrix{obj.Matrix} {}
+
+        Transform &operator=(Transform &obj)
+        {
+            Matrix = obj.Matrix;
+            return *this;
+        }
+
+        std::mutex mutex;
     };
 
     struct VertexBuffers
@@ -81,6 +92,7 @@ namespace Engine::Render
 
         void Draw(VertexBuffers buffer, Transform transform);
 
+        Renderer();
         ~Renderer();
 
         std::string DefaultVertexShader, DefaultFragmentShader;
@@ -96,6 +108,8 @@ namespace Engine::Render
     private:
         std::vector<int> shaders;
         std::vector<__Draw_Object> renderQueue;
+
+        std::mutex mutex;
     };
 
     inline Renderer *GlobalRenderer;

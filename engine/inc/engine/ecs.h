@@ -5,6 +5,7 @@
 #include <engine/render.h>
 #include <vector>
 #include <string>
+#include <mutex>
 
 namespace Engine::ECS
 {
@@ -22,6 +23,8 @@ namespace Engine::ECS
 
         Engine::Core::Any Public;
         GameObject *Parent;    
+    private:
+        std::mutex mutex;
     };
 
     class GameObject
@@ -42,6 +45,8 @@ namespace Engine::ECS
         std::string Name;
         Engine::Render::Transform Transform;
         std::vector<Component *> Components;
+    private:
+        std::mutex mutex;
     };
 
     class GameObjectManager
@@ -56,9 +61,11 @@ namespace Engine::ECS
         GameObject *Get(std::string name);
         bool Exists(std::string name);
 
+        GameObjectManager();
         ~GameObjectManager();
     private:
         std::vector<GameObject *> gameobjects;
+        std::mutex mutex;
     };
 
     inline GameObjectManager *GlobalGameObjectManager;

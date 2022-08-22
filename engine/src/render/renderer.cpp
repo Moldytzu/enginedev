@@ -114,6 +114,11 @@ void resize(GLFWwindow *window, int width, int height)
     glUniformMatrix4fv(instance->projectionLocation, 1, GL_FALSE, glm::value_ptr(instance->CameraProjection)); // set the projection
 }
 
+Engine::Render::Renderer::Renderer()
+{
+    mutex.unlock();
+}
+
 void Engine::Render::Renderer::Init()
 {
     Engine::Core::Logger::LogDebug("Initialising the renderer");
@@ -231,6 +236,7 @@ void Engine::Render::Renderer::EndFrame()
 
 unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::string fragment)
 {
+    LOCK;
     // create shaders for vertex and fragment
     const char *vertexSrc = vertex.c_str(), *fragmentSrc = fragment.c_str();
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER), fragmentShader = glCreateShader(GL_FRAGMENT_SHADER), shaderProgram = glCreateProgram();
@@ -251,6 +257,7 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
     {
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
         Engine::Core::Logger::LogError("Failed to compile vertex shader! (" + std::string(infoLog) + ")");
+        UNLOCK;
         return -1;
     }
 
@@ -260,6 +267,7 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
     {
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
         Engine::Core::Logger::LogError("Failed to compile fragment shader! (" + std::string(infoLog) + ")");
+        UNLOCK;
         return -1;
     }
 
@@ -272,6 +280,7 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
     {
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
         Engine::Core::Logger::LogError("Failed to link shader! (" + std::string(infoLog) + ")");
+        UNLOCK;
         return -1;
     }
 
@@ -279,12 +288,13 @@ unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::st
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
     shaders.push_back(shaderProgram);
-
+    UNLOCK;
     return shaderProgram;
 }
 
 unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
 {
+    LOCK;
     unsigned int texture;
     glGenTextures(1, &texture);                                   // generate a new texture
     glBindTexture(GL_TEXTURE_2D, texture);                        // bind texture
@@ -303,6 +313,7 @@ unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
     {
         Engine::Core::Logger::LogError("Failed to load texture from " + path);
         stbi_image_free(data);
+        UNLOCK;
         return 0;
     }
 
@@ -310,11 +321,13 @@ unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
     glGenerateMipmap(GL_TEXTURE_2D);                                                          // generate mipmap
 
     stbi_image_free(data); // free image data
+    UNLOCK;
     return texture;        // return the texture
 }
 
 Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> vertices, unsigned int shader, unsigned int texture)
 {
+    LOCK;
     size_t size = vertices.size() * 8 * sizeof(float); // size in bytes of the data stored in the vertices
 
     float *verts = new float[vertices.size() * 8]; // raw array that stores the raw data
@@ -352,6 +365,7 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vec
     buffers.vertices = size / sizeof(float) / 8; // get count of vertices
     buffers.texture = texture;
 
+    UNLOCK;
     return buffers;
 }
 
@@ -367,9 +381,11 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vec
 
 void Engine::Render::Renderer::Draw(Engine::Render::VertexBuffers buffer, Engine::Render::Transform transform)
 {
+    LOCK;
     __Draw_Object obj;                  // create instance of an internal object
     obj.t = transform, obj.vb = buffer; // set its metadata
     renderQueue.push_back(obj);         // push it on the render queue
+    UNLOCK;
 }
 
 bool Engine::Render::Renderer::Open()
