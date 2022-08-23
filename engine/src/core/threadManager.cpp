@@ -10,7 +10,7 @@ Engine::Core::ThreadManager::ThreadManager()
 {
     if (hardwareThreads == 0)
     {
-        Engine::Core::Logger::LogWarn("Failed to detect hardware threads count. Disabling multiprocessing."); // todo: use some syscalls to detect the threads
+        Engine::Core::Logger::LogWarn("Failed to detect hardware threads count. Disabling multiprocessing.");
         hardwareThreads = 0;
         return;
     }

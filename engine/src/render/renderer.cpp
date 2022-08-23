@@ -16,6 +16,7 @@ int drawWidth, drawHeight;                    // stores the current rendering fr
 bool first = true;                            // stores if it is first time the thread loop is ran
 bool initialised = false;                     // stores if the renderer is initialised
 bool _busy = false;                           // stores if the thread is currently doing something
+std::mutex mutex;
 
 // settings (TODO: move this in a class)
 float fov = 90.0f;                             // field of view
@@ -98,6 +99,7 @@ void recreateOffScreenBuffer()
 
 void resize(GLFWwindow *window, int width, int height)
 {
+    LOCK;
     windowWidth = drawWidth = width, windowHeight = drawHeight = height;
 
     if (superSampling)
@@ -115,6 +117,7 @@ void resize(GLFWwindow *window, int width, int height)
 
     instance->CameraProjection = glm::perspective(glm::radians(fov), ratio, 0.1f, 100.0f);                     // generate projection
     glUniformMatrix4fv(instance->projectionLocation, 1, GL_FALSE, glm::value_ptr(instance->CameraProjection)); // set the projection
+    UNLOCK;
 }
 
 void Engine::Render::Renderer::WaitCompletion()

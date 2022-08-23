@@ -118,7 +118,6 @@ namespace Engine::Render
         std::vector<int> shaders;
         std::vector<__Draw_Object> renderQueue;
         std::queue<std::function<void()>> jobs;
-        std::mutex mutex;
     };
 
     inline Renderer *GlobalRenderer;
