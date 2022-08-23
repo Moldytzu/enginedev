@@ -411,13 +411,7 @@ Engine::Render::Renderer::~Renderer()
 {
     Engine::Core::Logger::LogDebug("Destroying the Renderer");
 
-    // delete the shaders
-    for (size_t s = 0; s < shaders.size(); s++)
-        glDeleteProgram(shaders[s]);
-
-    glDeleteTextures(1, &tcBO);      // delete the color attachment texture
-    glDeleteRenderbuffers(1, &rBO);  // delete the render buffer object
-    glDeleteFramebuffers(1, &ssFBO); // delete the frame buffer
+    thread.detach(); // detach the thread
 
     glfwTerminate();
 }

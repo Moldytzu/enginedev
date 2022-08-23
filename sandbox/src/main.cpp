@@ -6,15 +6,14 @@
 
 class BaseRenderer : public Engine::ECS::Component
 {
-protected:
+public:
     Engine::Render::VertexBuffers buffers;
     std::vector<Engine::Render::Vertex> vertices;
 
-public:
     ~BaseRenderer()
     {
         Engine::Core::Logger::LogDebug("Destroying renderer component");
-        buffers.Destroy(); // destroy the buffers
+        Engine::Render::GlobalRenderer->ExecuteGraphics([&]() -> const auto{ buffers.Destroy(); });
     }
 
     virtual void Start()

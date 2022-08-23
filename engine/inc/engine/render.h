@@ -43,7 +43,6 @@ namespace Engine::Render
 
         void Destroy()
         {
-            glDeleteProgram(shader);
             glDeleteVertexArrays(1, &VAO);
             glDeleteBuffers(1, &VBO);
             glDeleteTextures(1, &texture);
