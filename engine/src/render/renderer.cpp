@@ -3,13 +3,10 @@
 #include <engine/vendor/stb_image.h>
 #include <engine/render.h>
 #include <engine/core.h>
-#include <engine/vendor/glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <iostream>
 #include <filesystem>
 
 Engine::Render::Renderer *instance = nullptr; // instance of this
-GLFWwindow *window = nullptr;                 // stores the glfw context
 unsigned int ssFBO, rBO, tcBO;                // super sampling frame buffer object, rendering buffer object, texture color buffer object
 int windowWidth, windowHeight;                // stores the current window size
 int drawWidth, drawHeight;                    // stores the current rendering framebuffer size
@@ -179,7 +176,7 @@ void Engine::Render::Renderer::StartFrame()
     {
         updateTitleTimer = currentFrame;                                   // reset timer
         std::string title = std::to_string((int)(1 / DeltaTime)) + " FPS"; // create the title
-        glfwSetWindowTitle(window, title.c_str());                         // set the title
+        glfwSetWindowTitle(Window, title.c_str());                         // set the title
     }
 
     // clear the render queue
@@ -220,7 +217,7 @@ void Engine::Render::Renderer::EndFrame()
         glBindFramebuffer(GL_READ_FRAMEBUFFER, ssFBO); // bind the super sampling framebuffer used to read the drawn stuff
         glBlitFramebuffer(0, 0, drawWidth, drawHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
     }
-    glfwSwapBuffers(window); // swap the buffers
+    glfwSwapBuffers(Window); // swap the buffers
     glfwPollEvents();        // poll for the events
 }
 
@@ -402,7 +399,7 @@ bool Engine::Render::Renderer::Open()
 {
     bool status;
     LOCK;
-    status = !glfwWindowShouldClose(window); // returns true when the window shouldn't close / when it's open
+    status = !glfwWindowShouldClose(Window); // returns true when the window shouldn't close / when it's open
     UNLOCK;
     return status;
 }
@@ -431,13 +428,13 @@ void Engine::Render::Renderer::threadInit()
 #endif
 
     windowWidth = 640, windowHeight = 480;
-    window = glfwCreateWindow(640, 480, "Main Window", NULL, NULL); // create the main window
-    if (window == NULL)
+    Window = glfwCreateWindow(640, 480, "Main Window", NULL, NULL); // create the main window
+    if (Window == NULL)
     {
         Engine::Core::Logger::LogError("Failed to create window");
         glfwTerminate();
     }
-    glfwMakeContextCurrent(window); // select the context
+    glfwMakeContextCurrent(Window); // select the context
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) // load glad
     {
@@ -445,7 +442,7 @@ void Engine::Render::Renderer::threadInit()
         glfwTerminate();
     }
 
-    glfwSetFramebufferSizeCallback(window, resize); // resize callback
+    glfwSetFramebufferSizeCallback(Window, resize); // resize callback
 
     glfwSwapInterval(0); // disable vertical sync
 
@@ -468,7 +465,7 @@ void Engine::Render::Renderer::threadInit()
     modelLocation = glGetUniformLocation(DefaultShader, "model");
     projectionLocation = glGetUniformLocation(DefaultShader, "projection");
 
-    resize(window, windowWidth, windowHeight); // simulate a resize event to regenerate the super sampling framebuffer and to properly calculate the perspective
+    resize(Window, windowWidth, windowHeight); // simulate a resize event to regenerate the super sampling framebuffer and to properly calculate the perspective
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);      // grayish colour
 
     glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnistropicFiltering); // determine max anistropic filtering factor

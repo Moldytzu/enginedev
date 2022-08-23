@@ -9,6 +9,8 @@
 #include <engine/vendor/glm/glm.hpp>
 #include <engine/vendor/glm/gtc/matrix_transform.hpp>
 #include <engine/vendor/glm/gtc/type_ptr.hpp>
+#include <engine/vendor/glad/glad.h>
+#include <GLFW/glfw3.h>
 
 namespace Engine::Render
 {
@@ -109,6 +111,7 @@ namespace Engine::Render
 
         unsigned int modelLocation, projectionLocation, viewLocation;
 
+        GLFWwindow *Window;
     private:
         void threadInit();
         void threadLoop();
