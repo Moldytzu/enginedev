@@ -15,6 +15,7 @@ int windowWidth, windowHeight;                // stores the current window size
 int drawWidth, drawHeight;                    // stores the current rendering framebuffer size
 bool first = true;                            // stores if it is first time the thread loop is ran
 bool initialised = false;                     // stores if the renderer is initialised
+bool _busy = false;                           // stores if the thread is currently doing something
 
 // settings (TODO: move this in a class)
 float fov = 90.0f;                             // field of view
@@ -122,8 +123,10 @@ void Engine::Render::Renderer::WaitCompletion()
     while (status)
     {
         LOCK;
-        status = !jobs.empty();
+        status = jobs.empty() && _busy;
         UNLOCK;
+        std::this_thread::yield();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
@@ -155,8 +158,8 @@ void Engine::Render::Renderer::Init()
     {
         LOCK;
         status = !initialised;
+        std::this_thread::yield();
         UNLOCK;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
@@ -320,7 +323,7 @@ void loadTextureImp(std::string path, unsigned int *ret)
 unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
 {
     unsigned int texture;
-    ExecuteGraphics([ this, &path, texture ]() -> const auto{ loadTextureImp(path, (unsigned int *)&texture); });
+    ExecuteGraphics([ this, path, &texture ]() -> const auto{ loadTextureImp(path, (unsigned int *)&texture); });
 
     return texture;
 }
@@ -386,9 +389,8 @@ Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vec
 void Engine::Render::Renderer::Draw(Engine::Render::VertexBuffers buffer, Engine::Render::Transform transform)
 {
     LOCK;
-    __Draw_Object obj; // create instance of an internal object
+    __Draw_Object obj;                  // create instance of an internal object
     obj.t = transform, obj.vb = buffer; // set its metadata
-    //Engine::Core::Logger::LogInfo(std::to_string(buffer.vertices));
     renderQueue.push_back(obj);         // push it on the render queue
     UNLOCK;
 }
@@ -497,13 +499,18 @@ void Engine::Render::Renderer::threadLoop()
         if (jobs.empty()) // wait for jobs
         {
             UNLOCK;
+            std::this_thread::yield();
             continue;
         }
 
         job = jobs.front(); // get the job
         jobs.pop();
-
+        _busy = true;
         UNLOCK;
         job(); // run it
+
+        LOCK;
+        _busy = false;
+        UNLOCK;
     }
 }

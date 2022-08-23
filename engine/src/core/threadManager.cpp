@@ -1,7 +1,10 @@
 #include <engine/core.h>
+#include <atomic>
 
 unsigned int hardwareThreads = std::thread::hardware_concurrency();
 bool shouldStop = false;
+unsigned int busy = 0;
+std::atomic<int> counter = 0;
 
 Engine::Core::ThreadManager::ThreadManager()
 {
@@ -36,7 +39,7 @@ Engine::Core::ThreadManager::~ThreadManager()
 
 void Engine::Core::ThreadManager::Queue(const std::function<void()> &job)
 {
-    if(hardwareThreads == 0) // no multiprocessing
+    if (hardwareThreads == 0) // no multiprocessing
     {
         job();
         return;
@@ -52,10 +55,11 @@ void Engine::Core::ThreadManager::Wait()
     bool availableJobs = true;
     while (availableJobs)
     {
-        jobsMutex.lock();                                          // lock the mutex
-        availableJobs = !jobs.empty();                             // check if there are still jobs
-        jobsMutex.unlock();                                        // unlock the mutex
+        jobsMutex.lock();                          // lock the mutex
+        availableJobs = jobs.empty() && busy == 0; // check if there are still jobs
+        jobsMutex.unlock();                        // unlock the mutex
     }
+    busy = 0;
 }
 
 void Engine::Core::ThreadManager::threadLoop()
@@ -71,14 +75,19 @@ void Engine::Core::ThreadManager::threadLoop()
         if (jobs.empty()) // wait for jobs
         {
             jobsMutex.unlock();
-            std::this_thread::yield();
+            std::this_thread::sleep_for(std::chrono::microseconds(10));
             continue;
         }
 
         job = jobs.front(); // get the job
         jobs.pop();
-
+        busy++; // increase the count of busy threads
         jobsMutex.unlock();
+
         job(); // run it
+
+        jobsMutex.lock();
+        busy--; // decrease the count of busy threads
+        jobsMutex.unlock();
     }
 }
