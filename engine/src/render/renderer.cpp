@@ -13,6 +13,8 @@ GLFWwindow *window = nullptr;                 // stores the glfw context
 unsigned int ssFBO, rBO, tcBO;                // super sampling frame buffer object, rendering buffer object, texture color buffer object
 int windowWidth, windowHeight;                // stores the current window size
 int drawWidth, drawHeight;                    // stores the current rendering framebuffer size
+bool first = true;                            // stores if it is first time the thread loop is ran
+bool initialised = false;                     // stores if the renderer is initialised
 
 // settings (TODO: move this in a class)
 float fov = 90.0f;                             // field of view
@@ -114,12 +116,308 @@ void resize(GLFWwindow *window, int width, int height)
     glUniformMatrix4fv(instance->projectionLocation, 1, GL_FALSE, glm::value_ptr(instance->CameraProjection)); // set the projection
 }
 
+void Engine::Render::Renderer::WaitCompletion()
+{
+    bool status = true;
+    while (status)
+    {
+        LOCK;
+        status = !jobs.empty();
+        UNLOCK;
+    }
+}
+
+void Engine::Render::Renderer::ExecuteGraphics(const std::function<void()> &command)
+{
+    WaitCompletion(); // wait for other commands to execute
+
+    LOCK;
+    jobs.push(command);
+    UNLOCK;
+
+    WaitCompletion(); // wait for the current command to execute
+}
+
 Engine::Render::Renderer::Renderer()
 {
-    mutex.unlock();
+    UNLOCK;
 }
 
 void Engine::Render::Renderer::Init()
+{
+    // launch the renderer
+    Engine::Core::Logger::LogDebug("Launching the renderer in another thread");
+    thread = std::thread(&Engine::Render::Renderer::threadLoop, this);
+
+    // wait for it to initialise
+    bool status = true;
+    while (status)
+    {
+        LOCK;
+        status = !initialised;
+        UNLOCK;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+double currentFrame, lastFrame, updateTitleTimer = 0;
+
+void Engine::Render::Renderer::StartFrame()
+{
+    // delta time calculation
+    currentFrame = glfwGetTime();
+    DeltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+
+    if (currentFrame >= updateTitleTimer + 1) // update the title roughfly every second
+    {
+        updateTitleTimer = currentFrame;                                   // reset timer
+        std::string title = std::to_string((int)(1 / DeltaTime)) + " FPS"; // create the title
+        glfwSetWindowTitle(window, title.c_str());                         // set the title
+    }
+
+    // clear the render queue
+    renderQueue.clear();
+
+    // use the super sampling framebuffer if enabled
+    if (superSampling)
+        glBindFramebuffer(GL_FRAMEBUFFER, ssFBO);
+    else
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // enable anisotropic filtering if enabled
+    float anisoValue = glm::min(targetAnistropicFiltering, maxAnistropicFiltering);
+    if (!anistropicFiltering)
+        anisoValue = 1.0f;
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisoValue);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the window and the depth buffer
+
+    glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(CameraTransform.Matrix)); // set the camera transform matrix
+}
+
+void Engine::Render::Renderer::EndFrame()
+{
+    // render everything
+    for (int i = 0; i < renderQueue.size(); i++)
+    {
+        __Draw_Object obj = renderQueue[i];
+        obj.vb.Bind();                                                                // bind the buffers
+        glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(obj.t.Matrix)); // pass the matrix of the transform
+        glDrawArrays(GL_TRIANGLES, 0, obj.vb.vertices);                               // draw
+    }
+
+    if (superSampling)
+    {
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);     // bind the default framebuffer used to copy the super sampling frame buffer
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, ssFBO); // bind the super sampling framebuffer used to read the drawn stuff
+        glBlitFramebuffer(0, 0, drawWidth, drawHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    }
+    glfwSwapBuffers(window); // swap the buffers
+    glfwPollEvents();        // poll for the events
+}
+
+void compileShaderImp(Engine::Render::Renderer &ref, std::string vertex, std::string fragment, unsigned int *ret)
+{
+    // create shaders for vertex and fragment
+    const char *vertexSrc = vertex.c_str(), *fragmentSrc = fragment.c_str();
+    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER), fragmentShader = glCreateShader(GL_FRAGMENT_SHADER), shaderProgram = glCreateProgram();
+
+    // pass the source code and compile
+    glShaderSource(vertexShader, 1, &vertexSrc, NULL);
+    glCompileShader(vertexShader);
+
+    glShaderSource(fragmentShader, 1, &fragmentSrc, NULL);
+    glCompileShader(fragmentShader);
+
+    // handle errors
+    int success;
+    char infoLog[512];
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+
+    if (!success)
+    {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        Engine::Core::Logger::LogError("Failed to compile vertex shader! (" + std::string(infoLog) + ")");
+
+        *ret = -1;
+        return;
+    }
+
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+
+    if (!success)
+    {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        Engine::Core::Logger::LogError("Failed to compile fragment shader! (" + std::string(infoLog) + ")");
+
+        *ret = -1;
+        return;
+    }
+
+    // link the shaders into a program
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    if (!success)
+    {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        Engine::Core::Logger::LogError("Failed to link shader! (" + std::string(infoLog) + ")");
+
+        *ret = -1;
+        return;
+    }
+
+    // delete unused objects
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+    *ret = shaderProgram;
+}
+
+unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::string fragment)
+{
+    unsigned int shader;
+    ExecuteGraphics([ this, &vertex, &fragment, shader ]() -> const auto{ compileShaderImp(*this, vertex, fragment, (unsigned int *)&shader); });
+
+    return shader;
+}
+
+void loadTextureImp(std::string path, unsigned int *ret)
+{
+    unsigned int texture;
+    glGenTextures(1, &texture);                                   // generate a new texture
+    glBindTexture(GL_TEXTURE_2D, texture);                        // bind texture
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping mode
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // linear (more blurry and slower) mipmapping
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    int width, height, nrChannels;
+
+    std::string parsedPath = Engine::Core::Filesystem::ParseRelativePath(path); // parse relative path
+
+    unsigned char *data = stbi_load(parsedPath.c_str(), &width, &height, &nrChannels, 0); // load image
+    if (!data)                                                                            // check for data
+    {
+        Engine::Core::Logger::LogError("Failed to load texture from " + path);
+        stbi_image_free(data);
+
+        *ret = 0;
+        return;
+    }
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data); // send data
+    glGenerateMipmap(GL_TEXTURE_2D);                                                          // generate mipmap
+
+    stbi_image_free(data); // free image data
+
+    *ret = texture; // return the texture
+}
+
+unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
+{
+    unsigned int texture;
+    ExecuteGraphics([ this, &path, texture ]() -> const auto{ loadTextureImp(path, (unsigned int *)&texture); });
+
+    return texture;
+}
+
+void generateBuffersImpl(std::vector<Engine::Render::Vertex> &vertices, unsigned int shader, unsigned int texture, Engine::Render::VertexBuffers *ret)
+{
+    size_t size = vertices.size() * 8 * sizeof(float); // size in bytes of the data stored in the vertices
+
+    float *verts = new float[vertices.size() * 8]; // raw array that stores the raw data
+    for (size_t s = 0; s < vertices.size(); s++)   // fill the array
+    {
+        verts[s * 8 + 0] = vertices[s].x;
+        verts[s * 8 + 1] = vertices[s].y;
+        verts[s * 8 + 2] = vertices[s].z;
+        verts[s * 8 + 3] = vertices[s].r;
+        verts[s * 8 + 4] = vertices[s].g;
+        verts[s * 8 + 5] = vertices[s].b;
+        verts[s * 8 + 6] = vertices[s].tx;
+        verts[s * 8 + 7] = vertices[s].ty;
+    }
+
+    Engine::Render::VertexBuffers buffers;
+    glGenVertexArrays(1, &buffers.VAO); // generate vao and vbo
+    glGenBuffers(1, &buffers.VBO);
+    glBindVertexArray(buffers.VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffers.VBO);
+    glBufferData(GL_ARRAY_BUFFER, size, verts, GL_STATIC_DRAW); // fill vbo with the vertex data
+
+    // tell opengl how to handle the vertex data
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
+
+    // enable the attributes
+    for (int i = 0; i <= 2; i++)
+        glEnableVertexAttribArray(i);
+
+    // fill the structure
+    buffers.shader = shader;
+    buffers.vertices = size / sizeof(float) / 8; // get count of vertices
+    buffers.texture = texture;
+    *ret = buffers;
+}
+
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> &vertices, unsigned int shader, unsigned int texture)
+{
+    Engine::Render::VertexBuffers buffers;
+    ExecuteGraphics([ this, &vertices, shader, texture, &buffers ]() -> const auto{ generateBuffersImpl(vertices, shader, texture, (Engine::Render::VertexBuffers *)&buffers); });
+    return buffers;
+}
+
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> &vertices, unsigned int shader)
+{
+    return GenerateBuffers(vertices, shader, 0);
+}
+
+Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex> &vertices)
+{
+    return GenerateBuffers(vertices, DefaultShader);
+}
+
+void Engine::Render::Renderer::Draw(Engine::Render::VertexBuffers buffer, Engine::Render::Transform transform)
+{
+    LOCK;
+    __Draw_Object obj; // create instance of an internal object
+    obj.t = transform, obj.vb = buffer; // set its metadata
+    //Engine::Core::Logger::LogInfo(std::to_string(buffer.vertices));
+    renderQueue.push_back(obj);         // push it on the render queue
+    UNLOCK;
+}
+
+bool Engine::Render::Renderer::Open()
+{
+    bool status;
+    LOCK;
+    status = !glfwWindowShouldClose(window); // returns true when the window shouldn't close / when it's open
+    UNLOCK;
+    return status;
+}
+
+Engine::Render::Renderer::~Renderer()
+{
+    Engine::Core::Logger::LogDebug("Destroying the Renderer");
+
+    // delete the shaders
+    for (size_t s = 0; s < shaders.size(); s++)
+        glDeleteProgram(shaders[s]);
+
+    glDeleteTextures(1, &tcBO);      // delete the color attachment texture
+    glDeleteRenderbuffers(1, &rBO);  // delete the render buffer object
+    glDeleteFramebuffers(1, &ssFBO); // delete the frame buffer
+
+    glfwTerminate();
+}
+
+void Engine::Render::Renderer::threadInit()
 {
     Engine::Core::Logger::LogDebug("Initialising the renderer");
 
@@ -161,7 +459,8 @@ void Engine::Render::Renderer::Init()
     // compile the default shader
     DefaultFragmentShader = fragment;
     DefaultVertexShader = vertex;
-    DefaultShader = CompileShader(DefaultVertexShader, DefaultFragmentShader);
+    compileShaderImp(*this, DefaultVertexShader, DefaultFragmentShader, &DefaultShader);
+    // DefaultShader = CompileShader(DefaultVertexShader, DefaultFragmentShader);
 
     glUseProgram(DefaultShader);
 
@@ -174,241 +473,37 @@ void Engine::Render::Renderer::Init()
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);      // grayish colour
 
     glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnistropicFiltering); // determine max anistropic filtering factor
-}
 
-double currentFrame, lastFrame, updateTitleTimer = 0;
-
-void Engine::Render::Renderer::StartFrame()
-{
-    // delta time calculation
-    currentFrame = glfwGetTime();
-    DeltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
-
-    if (currentFrame >= updateTitleTimer + 1) // update the title roughfly every second
-    {
-        updateTitleTimer = currentFrame;                                   // reset timer
-        std::string title = std::to_string((int)(1 / DeltaTime)) + " FPS"; // create the title
-        glfwSetWindowTitle(window, title.c_str());                         // set the title
-    }
-
-    // clear the render queue
-    renderQueue.clear();
-
-    glfwMakeContextCurrent(window);
-
-    // use the super sampling framebuffer if enabled
-    if (superSampling)
-        glBindFramebuffer(GL_FRAMEBUFFER, ssFBO);
-    else
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    // enable anisotropic filtering if enabled
-    float anisoValue = glm::min(targetAnistropicFiltering, maxAnistropicFiltering);
-    if (!anistropicFiltering)
-        anisoValue = 1.0f;
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisoValue);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the window and the depth buffer
-
-    glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(CameraTransform.Matrix)); // set the camera transform matrix
-}
-
-void Engine::Render::Renderer::EndFrame()
-{
-    // render everything
-    for (int i = 0; i < renderQueue.size(); i++)
-    {
-        __Draw_Object obj = renderQueue[i];
-        obj.vb.Bind();                                                                // bind the buffers
-        glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(obj.t.Matrix)); // pass the matrix of the transform
-        glDrawArrays(GL_TRIANGLES, 0, obj.vb.vertices);                               // draw
-    }
-
-    if (superSampling)
-    {
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);     // bind the default framebuffer used to copy the super sampling frame buffer
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, ssFBO); // bind the super sampling framebuffer used to read the drawn stuff
-        glBlitFramebuffer(0, 0, drawWidth, drawHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-    }
-    glfwSwapBuffers(window); // swap the buffers
-    glfwPollEvents();        // poll for the events
-}
-
-unsigned int Engine::Render::Renderer::CompileShader(std::string vertex, std::string fragment)
-{
     LOCK;
-    glfwMakeContextCurrent(window);
-    // create shaders for vertex and fragment
-    const char *vertexSrc = vertex.c_str(), *fragmentSrc = fragment.c_str();
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER), fragmentShader = glCreateShader(GL_FRAGMENT_SHADER), shaderProgram = glCreateProgram();
-
-    // pass the source code and compile
-    glShaderSource(vertexShader, 1, &vertexSrc, NULL);
-    glCompileShader(vertexShader);
-
-    glShaderSource(fragmentShader, 1, &fragmentSrc, NULL);
-    glCompileShader(fragmentShader);
-
-    // handle errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        Engine::Core::Logger::LogError("Failed to compile vertex shader! (" + std::string(infoLog) + ")");
-        UNLOCK;
-        return -1;
-    }
-
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        Engine::Core::Logger::LogError("Failed to compile fragment shader! (" + std::string(infoLog) + ")");
-        UNLOCK;
-        return -1;
-    }
-
-    // link the shaders into a program
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    if (!success)
-    {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        Engine::Core::Logger::LogError("Failed to link shader! (" + std::string(infoLog) + ")");
-        UNLOCK;
-        return -1;
-    }
-
-    // delete unused objects
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-    shaders.push_back(shaderProgram);
-    UNLOCK;
-    return shaderProgram;
-}
-
-unsigned int Engine::Render::Renderer::LoadTexture(std::string path)
-{
-    LOCK;
-    glfwMakeContextCurrent(window);
-    unsigned int texture;
-    glGenTextures(1, &texture);                                   // generate a new texture
-    glBindTexture(GL_TEXTURE_2D, texture);                        // bind texture
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping mode
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // linear (more blurry and slower) mipmapping
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-    int width, height, nrChannels;
-
-    std::string parsedPath = Engine::Core::Filesystem::ParseRelativePath(path); // parse relative path
-
-    unsigned char *data = stbi_load(parsedPath.c_str(), &width, &height, &nrChannels, 0); // load image
-    if (!data)                                                                            // check for data
-    {
-        Engine::Core::Logger::LogError("Failed to load texture from " + path);
-        stbi_image_free(data);
-        UNLOCK;
-        return 0;
-    }
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data); // send data
-    glGenerateMipmap(GL_TEXTURE_2D);                                                          // generate mipmap
-
-    stbi_image_free(data); // free image data
-    UNLOCK;
-    return texture;        // return the texture
-}
-
-Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex>& vertices, unsigned int shader, unsigned int texture)
-{
-    LOCK;
-    glfwMakeContextCurrent(window);
-    size_t size = vertices.size() * 8 * sizeof(float); // size in bytes of the data stored in the vertices
-
-    float *verts = new float[vertices.size() * 8]; // raw array that stores the raw data
-    for (size_t s = 0; s < vertices.size(); s++)   // fill the array
-    {
-        verts[s * 8 + 0] = vertices[s].x;
-        verts[s * 8 + 1] = vertices[s].y;
-        verts[s * 8 + 2] = vertices[s].z;
-        verts[s * 8 + 3] = vertices[s].r;
-        verts[s * 8 + 4] = vertices[s].g;
-        verts[s * 8 + 5] = vertices[s].b;
-        verts[s * 8 + 6] = vertices[s].tx;
-        verts[s * 8 + 7] = vertices[s].ty;
-    }
-
-    Engine::Render::VertexBuffers buffers;
-    glGenVertexArrays(1, &buffers.VAO); // generate vao and vbo
-    glGenBuffers(1, &buffers.VBO);
-    glBindVertexArray(buffers.VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, buffers.VBO);
-    glBufferData(GL_ARRAY_BUFFER, size, verts, GL_STATIC_DRAW); // fill vbo with the vertex data
-
-    // tell opengl how to handle the vertex data
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
-
-    // enable the attributes
-    for (int i = 0; i <= 2; i++)
-        glEnableVertexAttribArray(i);
-
-    // fill the structure
-    buffers.shader = shader;
-    buffers.vertices = size / sizeof(float) / 8; // get count of vertices
-    buffers.texture = texture;
-
-    UNLOCK;
-    return buffers;
-}
-
-Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex>& vertices, unsigned int shader)
-{
-    return GenerateBuffers(vertices, shader, 0);
-}
-
-Engine::Render::VertexBuffers Engine::Render::Renderer::GenerateBuffers(std::vector<Vertex>& vertices)
-{
-    return GenerateBuffers(vertices, DefaultShader);
-}
-
-void Engine::Render::Renderer::Draw(Engine::Render::VertexBuffers buffer, Engine::Render::Transform transform)
-{
-    LOCK;
-    __Draw_Object obj;                  // create instance of an internal object
-    obj.t = transform, obj.vb = buffer; // set its metadata
-    renderQueue.push_back(obj);         // push it on the render queue
+    initialised = true;
     UNLOCK;
 }
 
-bool Engine::Render::Renderer::Open()
+void Engine::Render::Renderer::threadLoop()
 {
-    return !glfwWindowShouldClose(window); // returns true when the window shouldn't close / when it's open
-}
+    while (true)
+    {
+        std::function<void()> job;
+        LOCK;
 
-Engine::Render::Renderer::~Renderer()
-{
-    Engine::Core::Logger::LogDebug("Destroying the Renderer");
-    glfwMakeContextCurrent(window);
-    // delete the shaders
-    for (size_t s = 0; s < shaders.size(); s++)
-        glDeleteProgram(shaders[s]);
+        if (first) // first time we run this loop
+        {
+            first = false;
+            UNLOCK;
+            threadInit();
+            continue;
+        }
 
-    glDeleteTextures(1, &tcBO);      // delete the color attachment texture
-    glDeleteRenderbuffers(1, &rBO);  // delete the render buffer object
-    glDeleteFramebuffers(1, &ssFBO); // delete the frame buffer
+        if (jobs.empty()) // wait for jobs
+        {
+            UNLOCK;
+            continue;
+        }
 
-    glfwTerminate();
+        job = jobs.front(); // get the job
+        jobs.pop();
+
+        UNLOCK;
+        job(); // run it
+    }
 }

@@ -25,11 +25,11 @@ int main(int argc, char *argv[])
 
     while (renderer.Open())
     {
-        renderer.StartFrame();      // create new frame
+        renderer.ExecuteGraphics([&renderer]() -> const auto {renderer.StartFrame();});
         application.Update();       // update the application on every tick
         gameObjectManager.Update(); // update the objects
         threadManager.Wait();       // wait for the threads to end their jobs
-        renderer.EndFrame(); // terminate the frame
+        renderer.ExecuteGraphics([&renderer]() -> const auto {renderer.EndFrame();});
     }
 
     threadManager.Wait();

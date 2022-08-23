@@ -76,7 +76,7 @@ void Engine::ECS::GameObjectManager::Update()
 {
     LOCK;
     for (int i = 0; i < gameobjects.size(); i++) // update every object
-        Engine::Core::GlobalThreadManager->Queue([ i, this ]() -> const auto{ gameobjects[i]->Update(); });
+        Engine::Core::GlobalThreadManager->Queue([i, this]() -> const auto{ gameobjects[i]->Update(); });
     UNLOCK;
 }
 

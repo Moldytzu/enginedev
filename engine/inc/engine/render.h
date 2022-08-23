@@ -2,6 +2,9 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <functional>
+#include <thread>
+#include <queue>
 #include <engine/vendor/glad/glad.h>
 #include <engine/vendor/glm/glm.hpp>
 #include <engine/vendor/glm/gtc/matrix_transform.hpp>
@@ -90,6 +93,8 @@ namespace Engine::Render
         VertexBuffers GenerateBuffers(std::vector<Vertex>& vertices, unsigned int shader);
         VertexBuffers GenerateBuffers(std::vector<Vertex>& vertices);
 
+        void ExecuteGraphics(const std::function<void()>& command);
+        void WaitCompletion();
         void Draw(VertexBuffers buffer, Transform transform);
 
         Renderer();
@@ -106,9 +111,13 @@ namespace Engine::Render
         unsigned int modelLocation, projectionLocation, viewLocation;
 
     private:
+        void threadInit();
+        void threadLoop();
+
+        std::thread thread;
         std::vector<int> shaders;
         std::vector<__Draw_Object> renderQueue;
-
+        std::queue<std::function<void()>> jobs;
         std::mutex mutex;
     };
 

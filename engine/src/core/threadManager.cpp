@@ -7,8 +7,9 @@ Engine::Core::ThreadManager::ThreadManager()
 {
     if (hardwareThreads == 0)
     {
-        Engine::Core::Logger::LogWarn("Failed to detect hardware threads count. Assuming that there are 4 threads"); // todo: use some syscalls to detect the threads
-        hardwareThreads = 4;
+        Engine::Core::Logger::LogWarn("Failed to detect hardware threads count. Disabling multiprocessing."); // todo: use some syscalls to detect the threads
+        hardwareThreads = 0;
+        return;
     }
 
     Engine::Core::Logger::LogDebug("Using " + std::to_string(hardwareThreads) + " hardware threads");
@@ -35,10 +36,15 @@ Engine::Core::ThreadManager::~ThreadManager()
 
 void Engine::Core::ThreadManager::Queue(const std::function<void()> &job)
 {
+    if(hardwareThreads == 0) // no multiprocessing
+    {
+        job();
+        return;
+    }
+
     jobsMutex.lock();   // lock the mutex so there isn't any data race
     jobs.push(job);     // push the job
     jobsMutex.unlock(); // make the jobs vector accessible
-    //job();
 }
 
 void Engine::Core::ThreadManager::Wait()
@@ -49,7 +55,6 @@ void Engine::Core::ThreadManager::Wait()
         jobsMutex.lock();                                          // lock the mutex
         availableJobs = !jobs.empty();                             // check if there are still jobs
         jobsMutex.unlock();                                        // unlock the mutex
-        std::this_thread::sleep_for(std::chrono::milliseconds(1)); // wait one milisecond to let the threads access the jobs
     }
 }
 
@@ -66,7 +71,7 @@ void Engine::Core::ThreadManager::threadLoop()
         if (jobs.empty()) // wait for jobs
         {
             jobsMutex.unlock();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1)); // wait one milisecond to let the other threads access the jobs
+            std::this_thread::yield();
             continue;
         }
 
