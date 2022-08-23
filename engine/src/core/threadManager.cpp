@@ -55,9 +55,10 @@ void Engine::Core::ThreadManager::Wait()
     bool availableJobs = true;
     while (availableJobs)
     {
-        jobsMutex.lock();                          // lock the mutex
-        availableJobs = jobs.empty() && busy == 0; // check if there are still jobs
-        jobsMutex.unlock();                        // unlock the mutex
+        jobsMutex.lock();                      // lock the mutex
+        availableJobs = !jobs.empty() || busy; // wait until the queue is empty or the threads aren't busy
+        jobsMutex.unlock();                    // unlock the mutex
+        std::this_thread::yield();             // tell the operating system that we want to give back control
     }
     busy = 0;
 }
@@ -75,7 +76,7 @@ void Engine::Core::ThreadManager::threadLoop()
         if (jobs.empty()) // wait for jobs
         {
             jobsMutex.unlock();
-            std::this_thread::sleep_for(std::chrono::microseconds(10));
+            std::this_thread::yield();
             continue;
         }
 

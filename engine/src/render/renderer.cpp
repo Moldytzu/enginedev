@@ -123,11 +123,11 @@ void Engine::Render::Renderer::WaitCompletion()
     while (status)
     {
         LOCK;
-        status = jobs.empty() && _busy;
+        status = !jobs.empty() || _busy; // wait until the queue is empty or the threads aren't busy
         UNLOCK;
-        std::this_thread::yield();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::yield(); // tell the operating system that we want to give back control
     }
+    _busy = false;
 }
 
 void Engine::Render::Renderer::ExecuteGraphics(const std::function<void()> &command)
