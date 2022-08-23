@@ -10,10 +10,12 @@ namespace Engine::Input
         InputManager();
         ~InputManager();
 
+        void Init();
         void Update();
 
         bool *Keys;
     private:
+        GLFWwindow *window;
         std::mutex mutex;
     };
 
