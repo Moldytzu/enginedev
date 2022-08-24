@@ -15,6 +15,7 @@ bool initialised = false;                     // stores if the renderer is initi
 bool _busy = false;                           // stores if the thread is currently doing something
 bool shouldReturn = false;                    // used to tell the thread that we want to stop
 std::mutex mutex;
+std::condition_variable jobsVariable;
 
 // settings (TODO: move this in a class)
 float fov = 90.0f;                             // field of view
@@ -139,6 +140,8 @@ void Engine::Render::Renderer::ExecuteGraphics(const std::function<void()> &comm
     jobs.push(command);
     UNLOCK;
 
+    jobsVariable.notify_one();
+
     WaitCompletion(); // wait for the current command to execute
 }
 
@@ -152,6 +155,8 @@ void Engine::Render::Renderer::Init()
     // launch the renderer
     Engine::Core::Logger::LogDebug("Launching the renderer in another thread");
     thread = std::thread(&Engine::Render::Renderer::threadLoop, this);
+
+    jobsVariable.notify_all(); // wake up the thread
 
     // wait for it to initialise
     bool status = true;
@@ -413,6 +418,8 @@ Engine::Render::Renderer::~Renderer()
     shouldReturn = true; // tell the thread that we want to stop
     UNLOCK;
 
+    jobsVariable.notify_all();
+
     thread.join(); // wait for the thread to stop
 
     glfwTerminate();
@@ -485,37 +492,41 @@ void Engine::Render::Renderer::threadLoop()
     while (true)
     {
         std::function<void()> job;
-        LOCK;
+        std::unique_lock<std::mutex> lock(mutex);
+        jobsVariable.wait(lock, [this]()
+                          { return first || shouldReturn || !jobs.empty(); });
 
         if (shouldReturn)
         {
-            UNLOCK;
+            lock.unlock();
             return;
         }
 
         if (first) // first time we run this loop
         {
             first = false;
-            UNLOCK;
+            lock.unlock();
             threadInit();
             continue;
         }
 
         if (jobs.empty()) // wait for jobs
         {
-            UNLOCK;
-            std::this_thread::yield();
+            lock.unlock();
+            std::this_thread::sleep_for(std::chrono::microseconds(10));
             continue;
         }
 
         job = jobs.front(); // get the job
         jobs.pop();
         _busy = true;
-        UNLOCK;
+        lock.unlock();
         job(); // run it
 
-        LOCK;
+        lock.lock();
         _busy = false;
-        UNLOCK;
+        lock.unlock();
+
+        std::this_thread::yield();
     }
 }

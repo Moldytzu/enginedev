@@ -6,6 +6,7 @@
 #include <mutex>
 #include <functional>
 #include <queue>
+#include <condition_variable>
 #include <engine/vendor/glm/common.hpp>
 #include <engine/vendor/glm/fwd.hpp>
 
@@ -27,6 +28,7 @@ namespace Engine::Core
     private:
         void threadLoop();
 
+        std::condition_variable jobsCondition;
         std::mutex jobsMutex;
         std::vector<std::thread> threads;
         std::queue<std::function<void()>> jobs;
