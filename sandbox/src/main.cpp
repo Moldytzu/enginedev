@@ -2,165 +2,17 @@
 #include <engine/render.h>
 #include <engine/ecs.h>
 #include <engine/input.h>
+#include <engine/standard/components/plane_renderer.h>
+#include <engine/standard/components/cube_renderer.h>
 #include <iostream>
 #include <time.h>
-
-class BaseRenderer : public Engine::ECS::Component
-{
-public:
-    Engine::Render::VertexBuffers buffers;
-    std::vector<Engine::Render::Vertex> vertices;
-
-    ~BaseRenderer()
-    {
-        Engine::Core::Logger::LogDebug("Destroying renderer component");
-        Engine::Render::GlobalRenderer->ExecuteGraphics([&]() -> const auto{ buffers.Destroy(); });
-    }
-
-    virtual void Start()
-    {
-        // initial public variables states
-        Public.SetString("texturePath", "");   // path to the texture
-        Public.SetBool("flushTexture", false); // flag to use when flushing texture and loading a new one
-    }
-
-    virtual void Update()
-    {
-        // generate buffers if flush is requested
-        if (Public.GetBool("flushTexture"))
-        {
-            buffers = Engine::Render::GlobalRenderer->GenerateBuffers(vertices, Engine::Render::GlobalRenderer->DefaultShader, Engine::Render::GlobalRenderer->LoadTexture(Public.GetString("texturePath"))); // generate new buffers
-            Public.SetBool("flushTexture", false);                                                                                                                                                            // reset flag state
-        }
-
-        Engine::Render::GlobalRenderer->Draw(buffers, Parent->Transform); // draw the vertices
-    }
-
-    virtual std::string FriendlyName()
-    {
-        return "BaseRenderer";
-    }
-};
-
-class PlaneRenderer : public BaseRenderer
-{
-public:
-    void Start()
-    {
-        BaseRenderer::Start(); // initialise the base renderer class
-
-        // vertices information
-        vertices =
-            {
-                // left triangle
-                Engine::Render::Vertex(-1, 0, 1, 1, 1, 1, 0, 1),  // left-top
-                Engine::Render::Vertex(-1, 0, -1, 1, 1, 1, 0, 0), // left-bottom
-                Engine::Render::Vertex(1, 0, -1, 1, 1, 1, 1, 0),  // right-bottom
-
-                // right triangle
-                Engine::Render::Vertex(1, 0, 1, 1, 1, 1, 1, 1),  // right-top corner
-                Engine::Render::Vertex(1, 0, -1, 1, 1, 1, 1, 0), // right-bottom
-                Engine::Render::Vertex(-1, 0, 1, 1, 1, 1, 0, 1), // left-top
-
-            };
-    }
-
-    std::string FriendlyName()
-    {
-        return "PlaneRenderer";
-    }
-};
-
-class CubeRenderer : public BaseRenderer
-{
-public:
-    void Start()
-    {
-        BaseRenderer::Start(); // initialise the base renderer class
-
-        // vertices information
-        vertices =
-            {
-                // bottom face
-                // left triangle
-                Engine::Render::Vertex(-1, -1, 1, 1, 1, 1, 0, 1),  // left-top
-                Engine::Render::Vertex(-1, -1, -1, 1, 1, 1, 0, 0), // left-bottom
-                Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0),  // right-bottom
-
-                // right triangle
-                Engine::Render::Vertex(1, -1, 1, 1, 1, 1, 1, 1),  // right-top corner
-                Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
-                Engine::Render::Vertex(-1, -1, 1, 1, 1, 1, 0, 1), // left-top
-
-                // top face
-                // left triangle
-                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1),  // left-top
-                Engine::Render::Vertex(-1, 1, -1, 1, 1, 1, 0, 0), // left-bottom
-                Engine::Render::Vertex(1, 1, -1, 1, 1, 1, 1, 0),  // right-bottom
-
-                // right triangle
-                Engine::Render::Vertex(1, 1, 1, 1, 1, 1, 1, 1),  // right-top corner
-                Engine::Render::Vertex(1, 1, -1, 1, 1, 1, 1, 0), // right-bottom
-                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1), // left-top
-
-                // left face
-                // left triangle
-                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1),   // left-top
-                Engine::Render::Vertex(-1, -1, 1, 1, 1, 1, 0, 0),  // left-bottom
-                Engine::Render::Vertex(-1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
-
-                // right triangle
-                Engine::Render::Vertex(-1, 1, -1, 1, 1, 1, 1, 1),  // right-top corner
-                Engine::Render::Vertex(-1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
-                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1),   // left-top
-
-                // right face
-                // left triangle
-                Engine::Render::Vertex(1, 1, 1, 1, 1, 1, 0, 1),   // left-top
-                Engine::Render::Vertex(1, -1, 1, 1, 1, 1, 0, 0),  // left-bottom
-                Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
-
-                // right triangle
-                Engine::Render::Vertex(1, 1, -1, 1, 1, 1, 1, 1),  // right-top corner
-                Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
-                Engine::Render::Vertex(1, 1, 1, 1, 1, 1, 0, 1),   // left-top
-
-                // front face
-                // left triangle
-                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1),  // left-top
-                Engine::Render::Vertex(-1, -1, 1, 1, 1, 1, 0, 0), // left-bottom
-                Engine::Render::Vertex(1, -1, 1, 1, 1, 1, 1, 0),  // right-bottom
-
-                // right triangle
-                Engine::Render::Vertex(1, 1, 1, 1, 1, 1, 1, 1),  // right-top corner
-                Engine::Render::Vertex(1, -1, 1, 1, 1, 1, 1, 0), // right-bottom
-                Engine::Render::Vertex(-1, 1, 1, 1, 1, 1, 0, 1), // left-top
-
-                // back face
-                // left triangle
-                Engine::Render::Vertex(-1, 1, -1, 1, 1, 1, 0, 1),  // left-top
-                Engine::Render::Vertex(-1, -1, -1, 1, 1, 1, 0, 0), // left-bottom
-                Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0),  // right-bottom
-
-                // right triangle
-                Engine::Render::Vertex(1, 1, -1, 1, 1, 1, 1, 1),  // right-top corner
-                Engine::Render::Vertex(1, -1, -1, 1, 1, 1, 1, 0), // right-bottom
-                Engine::Render::Vertex(-1, 1, -1, 1, 1, 1, 0, 1), // left-top
-            };
-    }
-
-    std::string FriendlyName()
-    {
-        return "PlaneRenderer";
-    }
-};
 
 class MyPlane : public Engine::ECS::GameObject
 {
 public:
     void Start()
     {
-        AddComponent(new PlaneRenderer)->Public.SetString("texturePath", "bricks.jpg")->SetBool("flushTexture", true); // add the renderer and then set the texture path and flush the texture
+        AddComponent(new Engine::Standard::Components::PlaneRenderer)->Public.SetString("texturePath", "bricks.jpg")->SetBool("flushTexture", true); // add the renderer and then set the texture path and flush the texture
     }
 
     void Update()
@@ -182,7 +34,7 @@ class MyCube : public Engine::ECS::GameObject
 public:
     void Start()
     {
-        AddComponent(new CubeRenderer)->Public.SetString("texturePath", "bricks.jpg")->SetBool("flushTexture", true); // add the renderer and then set the texture path and flush the texture
+        AddComponent(new Engine::Standard::Components::CubeRenderer)->Public.SetString("texturePath", "bricks.jpg")->SetBool("flushTexture", true); // add the renderer and then set the texture path and flush the texture
     }
 
     void Update()

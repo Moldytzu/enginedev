@@ -1,3 +1,4 @@
+#pragma once
 #include <mutex>
 #include <engine/core.h>
 #include <engine/render.h>
