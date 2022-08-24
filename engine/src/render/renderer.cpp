@@ -13,6 +13,7 @@ int drawWidth, drawHeight;                    // stores the current rendering fr
 bool first = true;                            // stores if it is first time the thread loop is ran
 bool initialised = false;                     // stores if the renderer is initialised
 bool _busy = false;                           // stores if the thread is currently doing something
+bool shouldReturn = false;                    // used to tell the thread that we want to stop
 std::mutex mutex;
 
 // settings (TODO: move this in a class)
@@ -408,7 +409,11 @@ Engine::Render::Renderer::~Renderer()
 {
     Engine::Core::Logger::LogDebug("Destroying the Renderer");
 
-    thread.detach(); // detach the thread
+    LOCK;
+    shouldReturn = true; // tell the thread that we want to stop
+    UNLOCK;
+
+    thread.join(); // wait for the thread to stop
 
     glfwTerminate();
 }
@@ -481,6 +486,12 @@ void Engine::Render::Renderer::threadLoop()
     {
         std::function<void()> job;
         LOCK;
+
+        if (shouldReturn)
+        {
+            UNLOCK;
+            return;
+        }
 
         if (first) // first time we run this loop
         {

@@ -4,7 +4,6 @@
 unsigned int hardwareThreads = std::thread::hardware_concurrency();
 bool shouldStop = false;
 unsigned int busy = 0;
-std::atomic<int> counter = 0;
 
 Engine::Core::ThreadManager::ThreadManager()
 {
@@ -33,8 +32,8 @@ Engine::Core::ThreadManager::~ThreadManager()
     shouldStop = true;
     jobsMutex.unlock();
 
-    for (int i = 0; i < threads.size(); i++) // detach the threads
-        threads.at(i).detach();
+    for (int i = 0; i < threads.size(); i++) // wait for the threads to stop
+        threads.at(i).join();
 }
 
 void Engine::Core::ThreadManager::Queue(const std::function<void()> &job)
@@ -71,7 +70,10 @@ void Engine::Core::ThreadManager::threadLoop()
         jobsMutex.lock();
 
         if (shouldStop == true)
+        {
+            jobsMutex.unlock();
             return;
+        }
 
         if (jobs.empty()) // wait for jobs
         {
