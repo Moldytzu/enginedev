@@ -29,6 +29,7 @@ namespace Engine::Core
         void threadLoop();
 
         std::condition_variable jobsCondition;
+        std::condition_variable doneCondition;
         std::mutex jobsMutex;
         std::vector<std::thread> threads;
         std::queue<std::function<void()>> jobs;
