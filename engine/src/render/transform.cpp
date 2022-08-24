@@ -12,8 +12,11 @@ Engine::Render::Transform::Transform() : Matrix{glm::mat4(1.0f)} {UNLOCK;} // cr
 
 Engine::Render::Transform *Engine::Render::Transform::Translate(glm::vec3 offset)
 {
+    if(this == &Engine::Render::GlobalRenderer->CameraTransform) // the coordonates of the camera are kinda reversed
+        offset = glm::vec3(-offset.x, -offset.y, offset.z);
+
     LOCK;
-    Matrix = glm::translate(Matrix, glm::vec3(-offset.x, -offset.y, offset.z)); // translate with an offset
+    Matrix = glm::translate(Matrix, offset); // translate with an offset
     UNLOCK;
     return this;
 }

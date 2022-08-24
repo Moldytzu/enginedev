@@ -7,7 +7,7 @@
 #include <iostream>
 #include <time.h>
 
-class MyPlane : public Engine::ECS::GameObject
+class MyGround : public Engine::ECS::GameObject
 {
 public:
     void Start()
@@ -18,9 +18,6 @@ public:
     void Update()
     {
         Engine::ECS::GameObject::Update(); // update components
-
-        float speed = 10 * Engine::Render::GlobalRenderer->DeltaTime;
-        Transform.Rotate(1 * speed, glm::vec3(Engine::Core::Random::Float(0, 1) * speed, Engine::Core::Random::Float(0, 1) * speed, Engine::Core::Random::Float(0, 1) * speed)); // rotate randomly
     }
 
     std::string FriendlyName()
@@ -57,7 +54,8 @@ public:
 void Engine::Core::Application::Start()
 {
     Engine::ECS::GlobalGameObjectManager->Add(new MyCube);
-    Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 0.5, -5)); // translate the camera up and back
+    Engine::ECS::GlobalGameObjectManager->Add(new MyGround);
+    Engine::Render::GlobalRenderer->CameraTransform.Translate(glm::vec3(0, 1, -5)); // translate the camera up and back
 }
 
 void Engine::Core::Application::Update()

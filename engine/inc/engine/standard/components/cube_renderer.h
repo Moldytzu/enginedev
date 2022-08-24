@@ -86,7 +86,7 @@ namespace Engine::Standard::Components
 
         std::string FriendlyName()
         {
-            return "PlaneRenderer";
+            return "CubeRenderer";
         }
     };
 };

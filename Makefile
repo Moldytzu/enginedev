@@ -5,3 +5,4 @@ all:
 
 clean:
 	$(MAKE) -C engine clean
+	$(MAKE) -C sandbox clean

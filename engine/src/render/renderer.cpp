@@ -12,9 +12,10 @@ int windowWidth, windowHeight;                // stores the current window size
 int drawWidth, drawHeight;                    // stores the current rendering framebuffer size
 bool first = true;                            // stores if it is first time the thread loop is ran
 bool initialised = false;                     // stores if the renderer is initialised
+bool _busy = false;                           // stores if the thread is currently doing something
 bool shouldReturn = false;                    // used to tell the thread that we want to stop
 std::mutex mutex;
-std::condition_variable jobsVariable, doneVariable;
+std::condition_variable jobsVariable;
 
 // settings (TODO: move this in a class)
 float fov = 90.0f;                             // field of view
@@ -120,8 +121,15 @@ void resize(GLFWwindow *window, int width, int height)
 
 void Engine::Render::Renderer::WaitCompletion()
 {
-    std::unique_lock<std::mutex> lock(mutex);
-    doneVariable.wait(lock, [this]() {return jobs.empty();});
+    bool status = true;
+    while (status)
+    {
+        LOCK;
+        status = !jobs.empty() || _busy; // wait until the queue is empty or the threads aren't busy
+        UNLOCK;
+        std::this_thread::yield(); // tell the operating system that we want to give back control
+    }
+    _busy = false;
 }
 
 void Engine::Render::Renderer::ExecuteGraphics(const std::function<void()> &command)
@@ -502,12 +510,23 @@ void Engine::Render::Renderer::threadLoop()
             continue;
         }
 
+        if (jobs.empty()) // wait for jobs
+        {
+            lock.unlock();
+            std::this_thread::sleep_for(std::chrono::microseconds(10));
+            continue;
+        }
+
         job = jobs.front(); // get the job
         jobs.pop();
+        _busy = true;
         lock.unlock();
         job(); // run it
 
-        doneVariable.notify_one();
+        lock.lock();
+        _busy = false;
+        lock.unlock();
+
         std::this_thread::yield();
     }
 }
