@@ -14,9 +14,14 @@ Engine::Render::Transform *Engine::Render::Transform::Translate(glm::vec3 offset
 {
     if(this == &Engine::Render::GlobalRenderer->CameraTransform) // the coordonates of the camera are kinda reversed
         offset = glm::vec3(-offset.x, -offset.y, offset.z);
+    else
+        offset.z = -offset.z;
 
     LOCK;
-    Matrix = glm::translate(Matrix, offset); // translate with an offset
+    // manualy translate
+    Matrix[3][0] += offset.x;
+    Matrix[3][1] += offset.y;
+    Matrix[3][2] += offset.z;
     UNLOCK;
     return this;
 }
@@ -24,7 +29,10 @@ Engine::Render::Transform *Engine::Render::Transform::Translate(glm::vec3 offset
 Engine::Render::Transform *Engine::Render::Transform::Scale(glm::vec3 axisFactor)
 {
     LOCK;
-    Matrix = glm::scale(Matrix, axisFactor); // scale
+    // manualy scale because the glm function affects the translation
+    Matrix[0][0] += axisFactor.x;
+    Matrix[1][1] += axisFactor.y;
+    Matrix[2][2] += axisFactor.z;
     UNLOCK;
     return this;
 }
