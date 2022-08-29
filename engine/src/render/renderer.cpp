@@ -203,7 +203,9 @@ void Engine::Render::Renderer::StartFrame()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the window and the depth buffer
 
-    glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(CameraTransform.Matrix)); // set the camera transform matrix
+    glm::mat4 cameraProjection = glm::lookAt(CameraTransform.Translation, CameraTransform.Translation + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0, 1, 0));
+
+    glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(cameraProjection)); // set the camera transform matrix
 }
 
 void Engine::Render::Renderer::EndFrame()
@@ -212,9 +214,9 @@ void Engine::Render::Renderer::EndFrame()
     for (int i = 0; i < renderQueue.size(); i++)
     {
         __Draw_Object obj = renderQueue[i];
-        obj.vb.Bind();                                                                // bind the buffers
-        glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(obj.t.Matrix)); // pass the matrix of the transform
-        glDrawArrays(GL_TRIANGLES, 0, obj.vb.vertices);                               // draw
+        obj.vb.Bind();                                                                     // bind the buffers
+        glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(obj.t.Construct())); // pass the matrix of the transform
+        glDrawArrays(GL_TRIANGLES, 0, obj.vb.vertices);                                    // draw
     }
 
     if (superSampling)

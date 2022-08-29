@@ -17,21 +17,25 @@ namespace Engine::Render
     class Transform
     {
     public:
-        glm::mat4 Matrix;
+        glm::vec3 Translation;
+        glm::vec3 Scalation;
+        glm::vec3 Rotation;
 
         Transform();
 
+        glm::mat4 Construct();
+
         Transform *Translate(glm::vec3 offset);
         Transform *Scale(glm::vec3 axisFactor);
-        Transform *Rotate(float degrees, glm::vec3 axis);
+        Transform *Rotate(float yaw, float pitch, float roll);
 
-        Transform *Reset();
-
-        Transform(const Transform &obj) : Matrix{obj.Matrix} {}
+        Transform(const Transform &obj) : Translation{obj.Translation}, Scalation{obj.Scalation}, Rotation{obj.Rotation} {}
 
         Transform &operator=(Transform &obj)
         {
-            Matrix = obj.Matrix;
+            Translation = obj.Translation;
+            Scalation = obj.Scalation;
+            Rotation = obj.Rotation;
             return *this;
         }
 
