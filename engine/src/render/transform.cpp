@@ -33,6 +33,16 @@ Engine::Render::Transform *Engine::Render::Transform::Rotate(float yaw, float pi
     Rotation.z += glm::radians(yaw);
     Rotation.x += glm::radians(roll);
     Rotation.y += glm::radians(pitch);
+
+    if(glm::degrees(Rotation.z) > 360)
+        Rotation.z = glm::radians(-360.0f);
+
+    if(glm::degrees(Rotation.x) > 360)
+        Rotation.x = glm::radians(-360.0f);
+
+    if(glm::degrees(Rotation.y) > 360)
+        Rotation.y = glm::radians(-360.0f);
+
     UNLOCK;
     return this;
 }

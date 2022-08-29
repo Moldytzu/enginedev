@@ -203,7 +203,7 @@ void Engine::Render::Renderer::StartFrame()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the window and the depth buffer
 
-    glm::mat4 cameraProjection = glm::lookAt(CameraTransform.Translation, CameraTransform.Translation + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0, 1, 0));
+    glm::mat4 cameraProjection = glm::lookAt(CameraTransform.Translation, CameraTransform.Translation + glm::vec3(CameraTransform.Rotation.x, CameraTransform.Rotation.y, 1), glm::vec3(0, 1, 0));
 
     glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(cameraProjection)); // set the camera transform matrix
 }
